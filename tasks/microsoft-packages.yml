@@ -28,3 +28,9 @@
     repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main"
     state: present
     filename: microsoft-vscode
+
+- name: Install microsoft-vscode
+  ansible.builtin.apt:
+    name: "code"
+    state: latest
+    update_cache: true
