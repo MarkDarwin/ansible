@@ -6,7 +6,6 @@
       apt:
         update_cache: yes
       changed_when: false
-      cache_valid_time: 3600
 
   tasks:
     - include: tasks/packages.yml
