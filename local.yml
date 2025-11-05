@@ -1,6 +1,7 @@
 - hosts: localhost
   connection: local
   become: true
+  
   pre_tasks:
     - name: Run updates and upgrade packages
       apt:
