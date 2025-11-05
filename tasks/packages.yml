@@ -6,6 +6,3 @@
       - ca-certificates
       - openssh-server
       - tmux
-    state: present
-    update_cache: yes
-  when: ansible_os_family == 'Debian'
