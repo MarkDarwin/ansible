@@ -6,3 +6,4 @@
       - ca-certificates
       - openssh-server
       - tmux
+      - zsh
