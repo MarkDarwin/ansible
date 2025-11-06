@@ -4,6 +4,6 @@
 
 - name: Set zsh as default shell
   ansible.builtin.user:
-    name: "{{ ansible_user_id }}"
+    name: "mark"
     shell: "{{ zsh_path.stdout }}"
     state: present
