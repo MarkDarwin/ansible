@@ -1,0 +1,4 @@
+- name: Set default shell to zsh
+  shell: /usr/bin/zsh
+  become: true
+  when: ansible_facts.shell != '/usr/bin/zsh'
