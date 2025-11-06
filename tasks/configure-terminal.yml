@@ -3,7 +3,6 @@
   register: zsh_path
 
 - name: Set zsh as default shell
-  become: true
   ansible.builtin.user:
     name: "{{ ansible_user_id }}"
     shell: "{{ zsh_path.stdout }}"
