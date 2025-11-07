@@ -2,6 +2,11 @@
   connection: local
   become: true
 
+  vars:
+    dotfiles_repo: "git@github.com:markdarwin/.dotfiles.git"
+    dotfiles_files:
+      - .zshrc
+
   pre_tasks:
     - name: Run updates and upgrade packages
       apt:
@@ -10,11 +15,6 @@
 
     - name: Install required roles
       command: ansible-galaxy install -r requirements.yml
-
-  vars:
-    dotfiles_repo: "git@github.com:markdarwin/.dotfiles.git"
-    dotfiles_files:
-      - .zshrc
 
   roles:
     - geerlingguy.dotfiles
