@@ -7,3 +7,5 @@
       - openssh-server
       - tmux
       - zsh
+      - alacritty
+    state: present

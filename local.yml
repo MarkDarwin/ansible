@@ -15,6 +15,7 @@
         dotfiles_repo_version: "main"
         dotfiles_files:
           - .zshrc
+          - .config/alacritty
 
   tasks:
     - include_tasks: tasks/packages.yml
