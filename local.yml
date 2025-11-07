@@ -13,10 +13,10 @@
   roles:
     - geerlingguy.dotfiles
 
-vars:
-  dotfiles_repo: "git@github.com:markdarwin/.dotfiles.git"
-  dotfiles_files:
-    - .zshrc
+  vars:
+    dotfiles_repo: "git@github.com:markdarwin/.dotfiles.git"
+    dotfiles_files:
+      - .zshrc
 
   tasks:
     - include_tasks: tasks/packages.yml
