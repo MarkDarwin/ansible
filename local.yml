@@ -8,6 +8,8 @@
         update_cache: yes
       changed_when: false
 
+    - name: Install required roles
+      command: ansible-galaxy install -r requirements.yml
   roles:
     - geerlingguy.dotfiles
 
