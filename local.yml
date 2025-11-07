@@ -12,6 +12,7 @@
     - role: geerlingguy.dotfiles
       vars:
         dotfiles_repo: "git@github.com:markdarwin/.dotfiles.git"
+        dotfiles_repo_version: "main"
         dotfiles_files:
           - .zshrc
 
