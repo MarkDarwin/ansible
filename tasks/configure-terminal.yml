@@ -7,3 +7,16 @@
     name: "mark"
     shell: "{{ zsh_path.stdout }}"
     state: present
+
+- name: Install all fonts from tasks/fonts
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/share/fonts/truetype/{{ item | basename }}"
+    mode: '0644'
+  with_fileglob:
+    - "tasks/fonts/*.ttf"
+  register: font_copy
+
+- name: Refresh font cache if fonts changed
+  command: fc-cache -f -v
+  when: font_copy is changed
