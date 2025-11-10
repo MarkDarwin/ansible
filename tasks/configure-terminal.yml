@@ -14,7 +14,7 @@
     dest: "/usr/share/fonts/truetype/{{ item | basename }}"
     mode: '0644'
   with_fileglob:
-    - "tasks/fonts/*.ttf"
+    - "/fonts/*.ttf"
   register: font_copy
 
 - name: Refresh font cache if fonts changed
