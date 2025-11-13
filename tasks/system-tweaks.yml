@@ -6,21 +6,18 @@
 
 - name: Disable sleep on AC power in KDE (Plasma 6)
   ansible.builtin.command: kwriteconfig6 --file powermanagementprofilesrc --group AC --key idleTime 0
-  warn: false
   become: false
   changed_when: false
   when: kde_plasmashell.stat.exists
 
 - name: Disable suspend to RAM on AC power in KDE (Plasma 6)
   ansible.builtin.command: kwriteconfig6 --file powermanagementprofilesrc --group AC --key suspendToRamWhenIdle false
-  warn: false
   become: false
   changed_when: false
   when: kde_plasmashell.stat.exists
 
 - name: Disable suspend to disk (hibernate) on AC power in KDE (Plasma 6)
   ansible.builtin.command: kwriteconfig6 --file powermanagementprofilesrc --group AC --key suspendToDiskWhenIdle false
-  warn: false
   become: false
   changed_when: false
   when: kde_plasmashell.stat.exists
