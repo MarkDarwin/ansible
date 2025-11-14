@@ -4,8 +4,12 @@
     path: /usr/bin/plasmashell
   register: kde_plasmashell
 
-- name: Disable sleep on AC power in KDE (Plasma 6)
-  ansible.builtin.command: kwriteconfig6 --file powerdevilrc --group AC --group Display --key DimDisplayIdelTimeoutSec 99
+- name: Disable sleep on AC power in KDE (Plasma 6) (idempotent)
+  ansible.builtin.ini_file:
+    path: "{{ lookup('env', 'HOME') }}/.config/powerdevilrc"
+    section: "AC Display"
+    option: "DimDisplayIdelTimeoutSec"
+    value: "99"
+    backup: true
   become: false
-  changed_when: false
   when: kde_plasmashell.stat.exists
