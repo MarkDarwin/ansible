@@ -9,7 +9,7 @@
     path: "{{ lookup('env', 'HOME') }}/.config/powerdevilrc"
     section: "AC][Display"
     option: "DimDisplayIdelTimeoutSec"
-    value: "99"
+    value: "33"
     backup: true
   become: false
   when: kde_plasmashell.stat.exists
