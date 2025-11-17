@@ -16,6 +16,15 @@
       Signed-By: /usr/share/keyrings/fortinet.gpg
     mode: "0644"
 
+- name: Pin FortiClient to Fortinet repo
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/forticlient.pref
+    content: |
+      Package: forticlient
+      Pin: origin "repo.fortinet.com"
+      Pin-Priority: 1001
+    mode: "0644"
+
 - name: Update apt cache
   ansible.builtin.apt:
     update_cache: yes
