@@ -10,9 +10,9 @@
     dest: /etc/apt/sources.list.d/forticlient.sources
     content: |
       Types: deb
-      URIs: https://repo.fortinet.com/repo/forticlient/7.4/debian/
-      Suites: trixie
-      Components: multiverse
+      URIs: https://repo.fortinet.com/repo/forticlient/7.4/ubuntu22/
+      Suites: stable
+      Components: non-free
       Signed-By: /usr/share/keyrings/fortinet.gpg
     mode: "0644"
 
