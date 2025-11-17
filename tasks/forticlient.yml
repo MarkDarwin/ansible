@@ -5,14 +5,22 @@
     mode: "0644"
     force: true
 
-- name: Add forticlient repository into sources list
-  ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/fortinet.gpg] https://repo.fortinet.com/repo/7.0/ubuntu bionic multiverse"
-    state: present
-    filename: fortinet
+- name: Add Fortinet repo in .sources format
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/forticlient.sources
+    content: |
+      Types: deb
+      URIs: https://repo.fortinet.com/repo/forticlient/7.4/debian/
+      Suites: trixie
+      Components: multiverse
+      Signed-By: /usr/share/keyrings/fortinet.gpg
+    mode: "0644"
 
-- name: Install forticlient
+- name: Update apt cache
   ansible.builtin.apt:
-    name: "forticlient"
-    state: latest
-    update_cache: true
+    update_cache: yes
+
+- name: Install FortiClient
+  ansible.builtin.apt:
+    name: forticlient
+    state: present
