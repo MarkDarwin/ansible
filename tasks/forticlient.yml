@@ -1,0 +1,18 @@
+- name: Download Forticlient GPG key
+  ansible.builtin.get_url:
+    url: "https://repo.fortinet.com/repo/7.0/ubuntu/DEB-GPG-KEY"
+    dest: "/usr/share/keyrings/fortinet.gpg"
+    mode: "0644"
+    force: true
+
+- name: Add forticlient repository into sources list
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/fortinet.gpg] https://repo.fortinet.com/repo/7.0/ubuntu bionic multiverse"
+    state: present
+    filename: fortinet
+
+- name: Install forticlient
+  ansible.builtin.apt:
+    name: "forticlient"
+    state: latest
+    update_cache: true
