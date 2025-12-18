@@ -134,9 +134,10 @@ fi
 echo "${GREEN}[INFO] Detecting desktop environment for SSH agent setup...${NC}"
 VAULT_NAME="homelab"
 SSH_ITEM_NAME="markdarwin"
-SSH_KEY_PATH="$HOME/.ssh/id_${SSH_ITEM_NAME}"
-SSH_PUB_KEY_PATH="$HOME/.ssh/id_${SSH_ITEM_NAME}.pub"
-mkdir -p "$HOME/.ssh"  # Ensure .ssh directory exists
+USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
+SSH_KEY_PATH="$USER_HOME/.ssh/id_${SSH_ITEM_NAME}"
+SSH_PUB_KEY_PATH="$USER_HOME/.ssh/id_${SSH_ITEM_NAME}.pub"
+mkdir -p "$USER_HOME/.ssh"  # Ensure .ssh directory exists
 
 # Function to check for desktop environment
 has_desktop_env() {
@@ -203,7 +204,7 @@ fi
 
 # Section 7: Update 1Password agent.toml with SSH key information
 # This step ensures the agent.toml file includes the correct key reference for 1Password SSH agent.
-AGENT_TOML_PATH="$HOME/1Password/ssh/agent.toml"
+AGENT_TOML_PATH="$USER_HOME/1Password/ssh/agent.toml"
 echo "${GREEN}[INFO] Updating $AGENT_TOML_PATH with SSH key reference...${NC}"
 
 mkdir -p "$(dirname "$AGENT_TOML_PATH")"
@@ -222,14 +223,14 @@ fi
 
 # Section 8: Create ~/.ansible.sh with secrets from 1Password
 # This step fetches Ansible-related secrets from 1Password and writes them to ~/.ansible.sh for use by Ansible.
-ANSIBLE_SH_PATH="$HOME/.ansible.sh"
+ANSIBLE_SH_PATH="$USER_HOME/.ansible.sh"
 echo "${GREEN}[INFO] Creating $ANSIBLE_SH_PATH with secrets from 1Password...${NC}"
 
 # Fetch secrets from 1Password vault (example: ansible-vault password, user credentials)
 VAULT_PASSWORD=$(op item get --vault "$VAULT_NAME" "ansible-vault-password" --field password 2>/dev/null || true)
 
 # Save vault password to ~/.vault_pass.txt
-VAULT_PASS_PATH="$HOME/.ansible/.vault_pass.txt"
+VAULT_PASS_PATH="$USER_HOME/.ansible/.vault_pass.txt"
 mkdir -p "$(dirname "$VAULT_PASS_PATH")"
 
 echo "$VAULT_PASSWORD" > "$VAULT_PASS_PATH"
