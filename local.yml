@@ -22,5 +22,4 @@
     - include_tasks: tasks/microsoft-packages.yml
     - include_tasks: tasks/configure-terminal.yml
     - include_tasks: tasks/system-tweaks.yml
-    - include_tasks: tasks/system-tweaks.yml
-
+    - include_tasks: tasks/security-tools.yml
