@@ -223,7 +223,7 @@ fi
 
 # Section 8: Create ~/.ansible.sh with secrets from 1Password
 # This step fetches Ansible-related secrets from 1Password and writes them to ~/.ansible.sh for use by Ansible.
-ANSIBLE_SH_PATH="$USER_HOME/.ansible.sh"
+ANSIBLE_SH_PATH="$USER_HOME/ansible.sh"
 echo "${GREEN}[INFO] Creating $ANSIBLE_SH_PATH with secrets from 1Password...${NC}"
 
 # Fetch secrets from 1Password vault (example: ansible-vault password, user credentials)
