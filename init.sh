@@ -227,7 +227,7 @@ ANSIBLE_SH_PATH="$USER_HOME/.ansible.sh"
 echo "${GREEN}[INFO] Creating $ANSIBLE_SH_PATH with secrets from 1Password...${NC}"
 
 # Fetch secrets from 1Password vault (example: ansible-vault password, user credentials)
-VAULT_PASSWORD=$(op item get --vault "$VAULT_NAME" "ansible-vault-password" --field password 2>/dev/null || true)
+VAULT_PASSWORD=$(op item get --vault "$VAULT_NAME" "ansible-vault-password" --field password --reveal 2>/dev/null || true)
 
 # Save vault password to ~/.vault_pass.txt
 VAULT_PASS_PATH="$USER_HOME/.ansible/.vault_pass.txt"
@@ -236,6 +236,7 @@ mkdir -p "$(dirname "$VAULT_PASS_PATH")"
 echo "$VAULT_PASSWORD" > "$VAULT_PASS_PATH"
 chmod 600 "$VAULT_PASS_PATH"
 echo "${GREEN}[INFO] Vault password saved to $VAULT_PASS_PATH and permissioned to 600.${NC}"
+
 LOCAL_USER=$(op item get --vault "$VAULT_NAME" "homelab-local-user" --field username 2>/dev/null || true)
 LOCAL_PASS=$(op item get --vault "$VAULT_NAME" "homelab-local-user" --field password 2>/dev/null || true)
 
