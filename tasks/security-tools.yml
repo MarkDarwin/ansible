@@ -39,22 +39,3 @@
     cmd: "/opt/forticlient/epctrl -c {{ forticlient_invitation_code }}"
   when: forticlient_invitation_code is defined
   no_log: True
-
-# Install crowdstrike falcon sensor
-- name: Download CrowdStrike Falcon Sensor deb package
-  ansible.builtin.get_url:
-    url: "{{ crowdstrike_falcon_sensor_url }}"
-    dest: "/tmp/CrowdStrike-Falcon-Sensor.deb"
-    mode: "0644"
-    force: true
-
-- name: Install CrowdStrike Falcon Sensor deb package
-  ansible.builtin.apt:
-    deb: "/tmp/CrowdStrike-Falcon-Sensor.deb"
-  when: crowdstrike_falcon_sensor_url is defined
-
-- name: Register CrowdStrike Falcon Sensor with provided CID
-  ansible.builtin.command:
-    cmd: "/opt/CrowdStrike/falconctl -s --cid={{ crowdstrike_falcon_sensor_cid }}"
-  when: crowdstrike_falcon_sensor_cid is defined
-  no_log: True

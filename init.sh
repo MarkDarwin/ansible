@@ -270,3 +270,29 @@ chmod 600 "$ANSIBLE_SH_PATH"
 chmod +x "$ANSIBLE_SH_PATH"
 echo "${GREEN}[INFO] $ANSIBLE_SH_PATH created, permissioned to 600, and made executable.${NC}"
 
+# Section 9: Install CrowdStrike Falcon Sensor
+# This step installs the Falcon Sensor from the provided .deb file and registers it using the invite code from 1Password.
+FALCON_SENSOR_DEB="falcon-sensor.deb"
+FALCON_SENSOR_PATH="$(dirname "$0")/$FALCON_SENSOR_DEB"
+
+if [[ ! -f "$FALCON_SENSOR_PATH" ]]; then
+    echo "${RED}[ERROR] Falcon Sensor .deb file not found at $FALCON_SENSOR_PATH.${NC}"
+    exit 1
+fi
+
+echo "${GREEN}[INFO] Installing CrowdStrike Falcon Sensor from $FALCON_SENSOR_PATH...${NC}"
+sudo apt-get install -y "$FALCON_SENSOR_PATH"
+
+echo "${GREEN}[INFO] Fetching Falcon Sensor invite code from 1Password...${NC}"
+FALCON_INVITE_CODE=$(op item get --vault "homelab" "falcon-sensor-invite-code" --field password --reveal 2>/dev/null || true)
+
+if [[ -z "$FALCON_INVITE_CODE" ]]; then
+    echo "${RED}[ERROR] Could not fetch Falcon Sensor invite code from 1Password. Please check vault item 'falcon-sensor-invite-code'.${NC}"
+    exit 1
+fi
+
+echo "${GREEN}[INFO] Registering Falcon Sensor with invite code...${NC}"
+sudo /opt/CrowdStrike/falconctl -s --cid="$FALCON_INVITE_CODE"
+
+echo "${GREEN}[INFO] CrowdStrike Falcon Sensor installed and registered successfully.${NC}"
+
