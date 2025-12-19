@@ -38,7 +38,6 @@
   ansible.builtin.command:
     cmd: "/opt/forticlient/epctrl -c {{ forticlient_invitation_code }}"
   when: forticlient_invitation_code is defined
-  no_log: True
 
 # Install crowdstrike falcon sensor
 - name: Download CrowdStrike Falcon Sensor deb package
