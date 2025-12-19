@@ -245,7 +245,8 @@ HOST_ID="$(hostname -f)"
 
 
 echo "add github ssh info"
-ssh -T git@github.com
+# Run the ssh command as the original user to avoid permission issues
+sudo -u "${SUDO_USER:-$USER}" ssh -T git@github.com
 
 echo "${GREEN}[INFO] Installing dotfiles ansible galaxy roles...${NC}"
 ansible-galaxy role install geerlingguy.dotfiles
