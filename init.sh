@@ -245,8 +245,10 @@ HOST_ID="$(hostname -f)"
 
 
 echo "add github ssh info"
+set +e  # Disable exit on error temporarily
 # Run the ssh command as the original user to avoid permission issues
 sudo -u "${SUDO_USER:-$USER}" ssh -T git@github.com
+set -e  # Re-enable exit on error
 
 echo "${GREEN}[INFO] Installing dotfiles ansible galaxy roles...${NC}"
 ansible-galaxy role install geerlingguy.dotfiles
@@ -262,6 +264,7 @@ EOF
 
 echo "run: ansible-pull -U git@github.com:markdarwin/ansible.git -K"
 
+chown "$SUDO_USER":"$SUDO_USER" "$ANSIBLE_SH_PATH"
 chmod 600 "$ANSIBLE_SH_PATH"
 chmod +x "$ANSIBLE_SH_PATH"
 echo "${GREEN}[INFO] $ANSIBLE_SH_PATH created, permissioned to 600, and made executable.${NC}"
