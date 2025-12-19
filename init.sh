@@ -235,6 +235,7 @@ mkdir -p "$(dirname "$VAULT_PASS_PATH")"
 
 echo "$VAULT_PASSWORD" > "$VAULT_PASS_PATH"
 chmod 600 "$VAULT_PASS_PATH"
+chown "$SUDO_USER":"$SUDO_USER" "$VAULT_PASS_PATH"
 echo "${GREEN}[INFO] Vault password saved to $VAULT_PASS_PATH and permissioned to 600.${NC}"
 
 LOCAL_USER=$(op item get --vault "$VAULT_NAME" "homelab-local-user" --field username 2>/dev/null || true)
