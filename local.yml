@@ -2,6 +2,9 @@
   connection: local
   become: true
 
+  vars_files:
+    - vault.yml
+
   pre_tasks:
     - name: Run updates and upgrade packages
       apt:
