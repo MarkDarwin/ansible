@@ -47,7 +47,6 @@
     dest: "/tmp/CrowdStrike-Falcon-Sensor.deb"
     mode: "0644"
     force: true
-  when: crowdstrike_falcon_sensor_url is defined
 
 - name: Install CrowdStrike Falcon Sensor deb package
   ansible.builtin.apt:
