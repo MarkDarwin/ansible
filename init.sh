@@ -182,7 +182,6 @@ else
 	fi
 	# Save private key
 	echo -e "$SSH_PRIVATE_KEY" | sed 's/^"//;s/"$//' | awk 'NF' > "$SSH_KEY_PATH"
-	chown -R "$SUDO_USER":"$SUDO_USER" "$USER_HOME/.ssh"
 	chmod 600 "$SSH_KEY_PATH"
 	echo -e "${GREEN}[INFO] SSH private key saved to $SSH_KEY_PATH.${NC}"
 	# Save public key
@@ -194,6 +193,7 @@ else
 	else
 		echo -e "${RED}[WARN] Could not fetch SSH public key from 1Password.${NC}"
 	fi
+	chown -R "$SUDO_USER":"$SUDO_USER" "$USER_HOME/.ssh"
 	# Start ssh-agent and add key
 	eval "$(ssh-agent -s)"
 	ssh-add "$SSH_KEY_PATH"
