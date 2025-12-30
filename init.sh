@@ -182,7 +182,7 @@ else
 	fi
 	# Save private key
 	echo -e "$SSH_PRIVATE_KEY" | sed 's/^"//;s/"$//' | awk 'NF' > "$SSH_KEY_PATH"
-	chown -R "$SUDO_USER":"$SUDO_USER" ~/.ssh
+	chown -R "$SUDO_USER":"$SUDO_USER" "$USER_HOME/.ssh"
 	chmod 600 "$SSH_KEY_PATH"
 	echo -e "${GREEN}[INFO] SSH private key saved to $SSH_KEY_PATH.${NC}"
 	# Save public key
@@ -236,7 +236,7 @@ mkdir -p "$(dirname "$VAULT_PASS_PATH")"
 
 echo -e "$VAULT_PASSWORD" > "$VAULT_PASS_PATH"
 chmod 600 "$VAULT_PASS_PATH"
-chown -R "$SUDO_USER":"$SUDO_USER" ~/.ansible
+chown -R "$SUDO_USER":"$SUDO_USER" "$USER_HOME/.ansible"
 echo -e "${GREEN}[INFO] Vault password saved to $VAULT_PASS_PATH and permissioned to 600.${NC}"
 
 LOCAL_USER=$(op item get --vault "$VAULT_NAME" "homelab-local-user" --field username 2>/dev/null || true)
