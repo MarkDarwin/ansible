@@ -193,14 +193,14 @@ else
 	else
 		echo -e "${RED}[WARN] Could not fetch SSH public key from 1Password.${NC}"
 	fi
-	chown -R "$SUDO_USER":"$SUDO_USER" "$USER_HOME/.ssh"
 	# Start ssh-agent and add key
 	eval "$(ssh-agent -s)"
 	ssh-add "$SSH_KEY_PATH"
 	echo -e "${GREEN}[INFO] SSH key added to built-in ssh-agent.${NC}"
 fi
 
-
+# Ensure correct ownership of .ssh directory
+chown -R "$SUDO_USER":"$SUDO_USER" "$USER_HOME/.ssh"
 
 
 # Section 7: Update 1Password agent.toml with SSH key information
