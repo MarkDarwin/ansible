@@ -169,7 +169,7 @@ if has_desktop_env; then
 	SETTINGS_JSON="$USER_HOME/.config/1Password/settings/settings.json"
 	if [ -f "$SETTINGS_JSON" ]; then
 		echo -e "${GREEN}[INFO] Enabling 1Password SSH agent in settings.json...${NC}"
-		sed -i 's/"sshAgentEnabled": false/"sshAgentEnabled": true/' "$SETTINGS_JSON"
+		sed -i 's/"sshAgent.enabled": false/"sshAgent.enabled": true/' "$SETTINGS_JSON"
 	else
 		echo -e "${YELLOW}[WARN] 1Password settings.json not found at $SETTINGS_JSON. Please enable SSH agent manually if needed.${NC}"
 	fi
