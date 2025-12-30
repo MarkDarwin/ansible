@@ -20,7 +20,7 @@ sudo apt install curl
 curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/init.sh -o init.sh
 chmod +x init.sh
 sudo ./init.sh
-sudo ./ansible.sh
+./ansible.sh
 ```
 
 - This command downloads and runs the latest `init.sh` directly from the main branch.
