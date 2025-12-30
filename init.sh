@@ -64,10 +64,11 @@ echo -e "${GREEN}[INFO] Ensuring project dependencies are installed...${NC}"
 install_packages "${PROJECT_PACKAGES[@]}"
 
 # Install roles from requirements.yml if present
+USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
 curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/requirements.yml -o requirements.yml
 if [[ -f "requirements.yml" ]]; then
 	echo -e "${GREEN}[INFO] Installing Ansible roles from requirements.yml...${NC}"
-	ansible-galaxy install -r requirements.yml
+	ansible-galaxy install -r requirements.yml --roles-path "$USER_HOME/.ansible/roles"
 else
 	echo -e "${YELLOW}[INFO] No requirements.yml file found. Skipping Ansible roles installation.${NC}"
 fi
@@ -135,7 +136,6 @@ fi
 echo -e "${GREEN}[INFO] Detecting desktop environment for SSH agent setup...${NC}"
 VAULT_NAME="homelab"
 SSH_ITEM_NAME="markdarwin"
-USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
 SSH_KEY_PATH="$USER_HOME/.ssh/id_${SSH_ITEM_NAME}"
 SSH_PUB_KEY_PATH="$USER_HOME/.ssh/id_${SSH_ITEM_NAME}.pub"
 mkdir -p "$USER_HOME/.ssh"  # Ensure .ssh directory exists
