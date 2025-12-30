@@ -274,7 +274,7 @@ cat > "$ANSIBLE_SH_PATH" <<EOF
 export ANSIBLE_STDOUT_CALLBACK=community.general.selective
 export ANSIBLE_CALLBACK_SELECTIVE_SHOW_OK=False
 export ANSIBLE_CALLBACK_SELECTIVE_SHOW_SKIPPED=False
-export ANSIBLE_CALLBACK_SELECTIVE_SHOW_CHANGED=False
+export ANSIBLE_CALLBACK_SELECTIVE_SHOW_CHANGED=True
 
 # Run ansible-pull with the vault password file and host_id as extra var
 ansible-pull -U git@github.com:markdarwin/ansible.git -K --vault-password-file ~/.ansible/.vault_pass.txt
