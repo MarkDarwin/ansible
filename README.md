@@ -15,17 +15,22 @@ reboot
 ```
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/init.sh
+cp falcon-sensor.deb ~/
+sudo apt install curl
+curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/init.sh -o init.sh
+chmod +x init.sh
+sudo ./init.sh
+sudo ./ansible.sh
 ```
 
 - This command downloads and runs the latest `init.sh` directly from the main branch.
 - You will need `curl` installed (usually present by default).
 - The script will prompt for your 1Password Service Account Token if not set as an environment variable.
-- Sudo privileges are required for full setup. If you do not have sudo, use `init-nosudo.sh` instead:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/init-nosudo.sh
-```
+
+## Running after bootstrap phase
+- Open 1Password and authenticate
+- Within 1Password, setup SSH agent and integrate with the CLI
 
 ## What the Script Does
 - Installs required base packages (curl, git, python3, ansible, etc.)
