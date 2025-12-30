@@ -64,6 +64,7 @@ echo -e "${GREEN}[INFO] Ensuring project dependencies are installed...${NC}"
 install_packages "${PROJECT_PACKAGES[@]}"
 
 # Install roles from requirements.yml if present
+curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/requirements.yml -o requirements.yml
 if [[ -f "requirements.yml" ]]; then
 	echo -e "${GREEN}[INFO] Installing Ansible roles from requirements.yml...${NC}"
 	ansible-galaxy install -r requirements.yml
@@ -162,6 +163,15 @@ if has_desktop_env; then
 		sudo apt-get install -y 1password
 	else
 		echo -e "${YELLOW}[INFO] 1Password Desktop app already installed.${NC}"
+	fi
+
+	# Enable 1Password SSH agent in settings.json if exists
+	SETTINGS_JSON="$USER_HOME/.config/1Password/settings/settings.json"
+	if [ -f "$SETTINGS_JSON" ]; then
+		echo -e "${GREEN}[INFO] Enabling 1Password SSH agent in settings.json...${NC}"
+		sed -i 's/"sshAgentEnabled": false/"sshAgentEnabled": true/' "$SETTINGS_JSON"
+	else
+		echo -e "${YELLOW}[WARN] 1Password settings.json not found at $SETTINGS_JSON. Please enable SSH agent manually if needed.${NC}"
 	fi
 	echo -e "${GREEN}[INFO] Please ensure you are signed in to the 1Password Desktop app and have enabled 'Integrate with SSH agent' in its settings.${NC}"
 	# Save public key for convenience

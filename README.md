@@ -17,6 +17,7 @@ reboot
 ```bash
 cp falcon-sensor.deb ~/
 sudo apt install curl
+curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/requirements.yml -o requirements.yml
 curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/init.sh -o init.sh
 chmod +x init.sh
 sudo ./init.sh
