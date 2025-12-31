@@ -1,0 +1,24 @@
+- name: Install apt-transport-https
+  ansible.builtin.apt:
+    name: apt-transport-https
+    state: latest
+    update_cache: true
+
+- name: Download Brave GPG key
+  ansible.builtin.get_url:
+    url: "https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg"
+    dest: "/usr/share/keyrings/brave-browser-archive-keyring.gpg"
+    mode: "0644"
+    force: true
+
+- name: Add Brave repository into sources list
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main"
+    state: present
+    filename: brave-browser
+
+- name: Install brave-browser
+  ansible.builtin.apt:
+    name: "brave-browser"
+    state: latest
+    update_cache: true
