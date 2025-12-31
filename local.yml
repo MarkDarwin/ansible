@@ -27,3 +27,4 @@
     - include_tasks: tasks/system-tweaks.yml
     - include_tasks: tasks/security-tools.yml
     - include_tasks: tasks/brave-browser.yml
+    - include_tasks: tasks/vivaldi-browser.yml
