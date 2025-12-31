@@ -8,6 +8,7 @@
       - tmux
       - zsh
       - alacritty
+      - remmina
     state: present
 
 - name: Update apt cache
