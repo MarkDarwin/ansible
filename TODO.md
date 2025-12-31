@@ -29,6 +29,6 @@ Planned tasks so I do not forget things
 - [ ] Pin apps to start menu
 
 ## 🌐 Browser & Utilities
-- [ ] Validate `tasks/brave-browser.yml` works correctly
+- [x] Validate `tasks/brave-browser.yml` works correctly
 
 ---
