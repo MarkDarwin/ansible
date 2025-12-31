@@ -1,6 +1,7 @@
 # Ansible Homelab Bootstrap
 
 This repository provides scripts and Ansible playbooks to quickly bootstrap a fresh Linux system with your preferred configuration, packages, and secrets management using 1Password.
+The expectation is we started with Debian netinstaller and chose KDE plasma, SSH server and standard system utilities
 
 ## Quick Start: Remote Bootstrap
 
