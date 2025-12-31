@@ -24,6 +24,7 @@ Planned tasks so I do not forget things
 - [ ] Review falcon config
 
 ## 🖥️ System Tweaks & Configuration
+- [ ] Fix git config for current user
 - [ ] Pin apps to KDE panel
 - [ ] Pin apps to start menu
 
