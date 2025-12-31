@@ -26,3 +26,4 @@
     - include_tasks: tasks/configure-terminal.yml
     - include_tasks: tasks/system-tweaks.yml
     - include_tasks: tasks/security-tools.yml
+    - include_tasks: tasks/brave-browser.yml
