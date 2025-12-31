@@ -114,13 +114,13 @@ if [[ -n "$GIT_USER" && -n "$GIT_EMAIL" ]]; then
 	CURRENT_GIT_USER=$(git config --global user.name || true)
 	CURRENT_GIT_EMAIL=$(git config --global user.email || true)
 	if [[ "$CURRENT_GIT_USER" != "$GIT_USER" ]]; then
-		git config --global user.name "$GIT_USER"
+		sudo -u "${SUDO_USER:-$USER}" git config --global user.name "$GIT_USER"
 		echo -e "${GREEN}[INFO] Set git user.name to $GIT_USER${NC}"
 	else
 		echo -e "${YELLOW}[INFO] git user.name already set.${NC}"
 	fi
 	if [[ "$CURRENT_GIT_EMAIL" != "$GIT_EMAIL" ]]; then
-		git config --global user.email "$GIT_EMAIL"
+		sudo -u "${SUDO_USER:-$USER}" git config --global user.email "$GIT_EMAIL"
 		echo -e "${GREEN}[INFO] Set git user.email to $GIT_EMAIL${NC}"
 	else
 		echo -e "${YELLOW}[INFO] git user.email already set.${NC}"
@@ -324,4 +324,3 @@ echo -e "${GREEN}[INFO] Registering Falcon Sensor with invite code...${NC}"
 sudo /opt/CrowdStrike/falconctl -s --cid="$FALCON_INVITE_CODE"
 
 echo -e "${GREEN}[INFO] CrowdStrike Falcon Sensor installed and registered successfully.${NC}"
-
