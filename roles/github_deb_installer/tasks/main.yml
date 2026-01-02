@@ -1,0 +1,67 @@
+# roles/github_deb_installer/tasks/main.yml
+- name: Get latest release info from {{ github_repo }}
+  uri:
+    url: "https://api.github.com/repos/{{ github_repo }}/releases/latest"
+    return_content: yes
+  register: github_release
+
+- name: Extract latest version number
+  set_fact:
+    latest_version: "{{ github_release.json.tag_name | regex_replace('^v', '') }}"
+
+- name: Find .deb download URL
+  set_fact:
+    deb_url: "{{ item.browser_download_url }}"
+  loop: "{{ github_release.json.assets }}"
+  when: item.name is match(deb_pattern)
+
+- name: Get filename from URL
+  set_fact:
+    deb_filename: "{{ deb_url | basename }}"
+
+- name: Check if {{ package_name }} is already installed
+  command: dpkg-query -W -f='${Version}' {{ package_name }}
+  register: installed_version
+  failed_when: false
+  changed_when: false
+
+- name: Display version information
+  debug:
+    msg:
+      - "Package: {{ package_name }}"
+      - "Latest available version: {{ latest_version }}"
+      - "Installed version: {{ installed_version.stdout if installed_version.rc == 0 else 'Not installed' }}"
+
+- name: Determine if update is needed
+  set_fact:
+    needs_update: "{{ installed_version.rc != 0 or installed_version.stdout is version(latest_version, '<') }}"
+
+- name: Create temporary directory
+  file:
+    path: "{{ temp_dir }}"
+    state: directory
+    mode: "0755"
+  when: needs_update
+
+- name: Download latest {{ package_name }} .deb package
+  get_url:
+    url: "{{ deb_url }}"
+    dest: "{{ temp_dir }}/{{ deb_filename }}"
+    mode: "0644"
+  when: needs_update
+
+- name: Install {{ package_name }} .deb package
+  apt:
+    deb: "{{ temp_dir }}/{{ deb_filename }}"
+    state: present
+  when: needs_update
+
+- name: Clean up temporary directory
+  file:
+    path: "{{ temp_dir }}"
+    state: absent
+  when: needs_update
+
+- name: Display installation status
+  debug:
+    msg: "{{ 'Updated ' + package_name + ' to version ' + latest_version if needs_update else package_name + ' is already up to date (version ' + installed_version.stdout + ')' }}"

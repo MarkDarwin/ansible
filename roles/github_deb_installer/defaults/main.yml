@@ -1,0 +1,4 @@
+github_repo: ""
+package_name: ""
+deb_pattern: ".*\\.deb$"
+temp_dir: "/tmp/{{ package_name }}_install"
