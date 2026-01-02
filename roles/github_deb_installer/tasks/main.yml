@@ -11,10 +11,10 @@
 
 - name: Find .deb download URL
   set_fact:
-    deb_url: "{{ item.browser_download_url }}"
-    deb_filename: "{{ item.name }}"
+    deb_url: "{{ asset.browser_download_url }}"
+    deb_filename: "{{ asset.name }}"
   loop: "{{ github_release.json.assets }}"
-  when: item.name is match(deb_pattern)
+  when: asset.name is match(deb_pattern)
   loop_control:
     loop_var: asset
 

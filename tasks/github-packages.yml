@@ -5,7 +5,7 @@
   vars:
     github_repo: "{{ package.repo }}"
     package_name: "{{ package.package }}"
-    deb_pattern: "{{ package.pattern | default('.*\\.deb) }}"
+    deb_pattern: "{{ package.pattern | default('.*\\.deb$') }}"
   loop:
     - repo: "sharkdp/bat"
       package: "bat"
