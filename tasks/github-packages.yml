@@ -3,11 +3,13 @@
   include_role:
     name: github_deb_installer
   vars:
-    github_repo: "{{ item.repo }}"
-    package_name: "{{ item.package }}"
-    deb_pattern: "{{ item.pattern | default('.*\\.deb$') }}"
+    github_repo: "{{ package.repo }}"
+    package_name: "{{ package.package }}"
+    deb_pattern: "{{ package.pattern | default('.*\\.deb) }}"
   loop:
     - repo: "sharkdp/bat"
       package: "bat"
       pattern: ".*amd64\\.deb$"
     # Add more packages here as needed
+  loop_control:
+    loop_var: package
