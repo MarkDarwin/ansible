@@ -18,6 +18,7 @@
         dotfiles_repo_version: "main"
         dotfiles_files:
           - .zshrc
+          - .zprofile
           - .config/alacritty
 
   tasks:
