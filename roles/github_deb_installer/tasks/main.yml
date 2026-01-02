@@ -34,7 +34,7 @@
 
 - name: Determine if update is needed
   set_fact:
-    needs_update: "{{ installed_version.rc != 0 or installed_version.stdout is version(latest_version, '<') }}"
+    needs_update: "{{ installed_version.rc != 0 or (installed_version.stdout | length > 0 and installed_version.stdout is version(latest_version, '<')) }}"
 
 - name: Create temporary directory
   file:
