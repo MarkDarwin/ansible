@@ -1,71 +1,65 @@
-- name: Install or Update Obsidian from GitHub Releases
-  vars:
-    github_api_url: "https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest"
-    temp_dir: "/tmp/obsidian_install"
+- name: Get latest release info from GitHub API
+  uri:
+    url: "https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest"
+    return_content: yes
+  register: github_release
 
-  tasks:
-    - name: Get latest release info from GitHub API
-      uri:
-        url: "{{ github_api_url }}"
-        return_content: yes
-      register: github_release
+- name: Extract latest version number
+  set_fact:
+    latest_version: "{{ github_release.json.tag_name | regex_replace('^v', '') }}"
 
-    - name: Extract latest version number
-      set_fact:
-        latest_version: "{{ github_release.json.tag_name | regex_replace('^v', '') }}"
+- name: Find .deb download URL
+  set_fact:
+    deb_url: "{{ item.browser_download_url }}"
+  loop: "{{ github_release.json.assets }}"
+  when: item.name is match('.*\.deb$')
 
-    - name: Find .deb download URL
-      set_fact:
-        deb_url: "{{ item.browser_download_url }}"
-      loop: "{{ github_release.json.assets }}"
-      when: item.name is match('.*\.deb$')
+- name: Get filename from URL
+  set_fact:
+    deb_filename: "{{ deb_url | basename }}"
 
-    - name: Get filename from URL
-      set_fact:
-        deb_filename: "{{ deb_url | basename }}"
+- name: Check if Obsidian is already installed
+  command: dpkg-query -W -f='${Version}' obsidian
+  register: installed_version
+  failed_when: false
+  changed_when: false
 
-    - name: Check if Obsidian is already installed
-      command: dpkg-query -W -f='${Version}' obsidian
-      register: installed_version
-      failed_when: false
-      changed_when: false
+- name: Display version information
+  debug:
+    msg:
+      - "Latest available version: {{ latest_version }}"
+      - "Installed version: {{ installed_version.stdout if installed_version.rc == 0 else 'Not installed' }}"
 
-    - name: Display version information
-      debug:
-        msg:
-          - "Latest available version: {{ latest_version }}"
-          - "Installed version: {{ installed_version.stdout if installed_version.rc == 0 else 'Not installed' }}"
+- name: Determine if update is needed
+  set_fact:
+    needs_update: "{{ installed_version.rc != 0 or installed_version.stdout is version(latest_version, '<') }}"
 
-    - name: Determine if update is needed
-      set_fact:
-        needs_update: "{{ installed_version.rc != 0 or installed_version.stdout is version(latest_version, '<') }}"
+- name: Create temporary directory
+  file:
+    path: "/tmp/obsidian_install"
+    state: directory
+    mode: "0755"
+  when: needs_update
 
-    - name: Create temporary directory
-      file:
-        path: "{{ temp_dir }}"
-        state: directory
-        mode: "0755"
-      when: needs_update
+- name: Download latest Obsidian .deb package
+  get_url:
+    url: "{{ deb_url }}"
+    dest: "/tmp/obsidian_install/{{ deb_filename }}"
+    mode: "0644"
+  when: needs_update
 
-    - name: Download latest Obsidian .deb package
-      get_url:
-        url: "{{ deb_url }}"
-        dest: "{{ temp_dir }}/{{ deb_filename }}"
-        mode: "0644"
-      when: needs_update
+- name: Install Obsidian .deb package
+  apt:
+    deb: "/tmp/obsidian_install/{{ deb_filename }}"
+    state: present
+  when: needs_update
 
-    - name: Install Obsidian .deb package
-      apt:
-        deb: "{{ temp_dir }}/{{ deb_filename }}"
-        state: present
-      when: needs_update
+- name: Clean up temporary directory
+  file:
+    path: "/tmp/obsidian_install"
+    state: absent
+  when: needs_update
 
-    - name: Clean up temporary directory
-      file:
-        path: "{{ temp_dir }}"
-        state: absent
-      when: needs_update
-
-    - name: Display installation status
-      debug:
-        msg: "{{ 'Obsidian has been updated to version ' + latest_version if needs_update else 'Obsidian is already up to date (version ' + installed_version.stdout + ')' }}"
+- name: Display installation status
+  debug:
+    msg: "{{ 'Obsidian has been updated to version ' + latest_version if needs_update else 'Obsidian is already up to date (version ' + installed_version.stdout + ')' }}"
