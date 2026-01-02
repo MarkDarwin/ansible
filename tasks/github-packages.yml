@@ -9,7 +9,8 @@
   loop:
     - repo: "sharkdp/bat"
       package: "bat"
-      pattern: ".*amd64\\.deb$"
+      pattern: '^bat-musl_[0-9.]+_musl-linux-amd64\.deb$'
+    # USe single quotes to avoid YAML parsing issues with regex
     # Add more packages here as needed
   loop_control:
     loop_var: package

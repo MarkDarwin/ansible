@@ -12,12 +12,16 @@
 - name: Find .deb download URL
   set_fact:
     deb_url: "{{ item.browser_download_url }}"
+    deb_filename: "{{ item.name }}"
   loop: "{{ github_release.json.assets }}"
   when: item.name is match(deb_pattern)
+  loop_control:
+    loop_var: asset
 
-- name: Get filename from URL
-  set_fact:
-    deb_filename: "{{ deb_url | basename }}"
+- name: Fail if no matching .deb found
+  fail:
+    msg: "No .deb file matching pattern '{{ deb_pattern }}' found in release assets"
+  when: deb_url is not defined
 
 - name: Check if {{ package_name }} is already installed
   command: dpkg-query -W -f='${Version}' {{ package_name }}
