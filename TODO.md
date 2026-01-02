@@ -12,10 +12,10 @@ Planned tasks so I do not forget things
 - [ ] WPS office
 - [ ] Audible
 - [ ] Sound Switcher Indicator
-- [x] Remina remote desktop
+- [x] Remmina remote desktop
 - [ ] Obsidian
 - [ ] Raspberry pi imager
-- [ ] Vivaldi browser
+- [x] Vivaldi browser
 - [ ] Review and remove some default packages
 
 ## 🔒 Security & Vault
