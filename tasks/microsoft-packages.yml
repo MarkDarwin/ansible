@@ -34,3 +34,9 @@
     name: "code"
     state: latest
     update_cache: true
+
+- name: Install azure-cli
+  ansible.builtin.apt:
+    name: "azure-cli"
+    state: latest
+    update_cache: true
