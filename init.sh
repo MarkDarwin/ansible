@@ -321,6 +321,6 @@ if [[ -z "$FALCON_INVITE_CODE" ]]; then
 fi
 
 echo -e "${GREEN}[INFO] Registering Falcon Sensor with invite code...${NC}"
-sudo /opt/CrowdStrike/falconctl -s --cid="$FALCON_INVITE_CODE"
+sudo /opt/CrowdStrike/falconctl -s -f --cid="$FALCON_INVITE_CODE"
 
 echo -e "${GREEN}[INFO] CrowdStrike Falcon Sensor installed and registered successfully.${NC}"
