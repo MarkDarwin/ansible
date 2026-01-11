@@ -5,7 +5,7 @@
   args:
     creates: "/root/.gnupg/pubring.kbx"
 
-# Export and dearmor the key into APT's keyring directory
+# Export and dearmor the key into APT's keyring directory (binary format required)
 - name: Export and dearmor Fortinet key
   ansible.builtin.shell: |
     gpg --export 18AC26395E54716D | gpg --dearmor > /usr/share/keyrings/fortinet.gpg
