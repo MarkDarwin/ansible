@@ -1,0 +1,49 @@
+---
+# Ensure the Fortinet signing key is available in the root GPG keybox
+- name: Import Fortinet GPG key from keyserver
+  ansible.builtin.command:
+    cmd: "gpg --keyserver keyserver.ubuntu.com --recv-keys 18AC26395E54716D"
+  args:
+    creates: "/root/.gnupg/pubring.kbx"
+
+# Convert the imported key into a binary keyring for APT
+- name: Export and dearmor Fortinet key into APT keyring
+  ansible.builtin.shell: |
+    gpg --export 18AC26395E54716D | gpg --dearmor > /usr/share/keyrings/fortinet.gpg
+  args:
+    creates: "/usr/share/keyrings/fortinet.gpg"
+
+# Add the Fortinet repository definition
+- name: Add Fortinet repo in .sources format
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/forticlient.sources
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: https://repo.fortinet.com/repo/forticlient/7.4/ubuntu22/
+      Suites: stable
+      Components: non-free
+      Signed-By: /usr/share/keyrings/fortinet.gpg
+
+# Pin FortiClient packages to the Fortinet repo
+- name: Pin FortiClient to Fortinet repo
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/forticlient.pref
+    mode: "0644"
+    content: |
+      Package: forticlient
+      Pin: origin "repo.fortinet.com"
+      Pin-Priority: 1001
+
+# Install FortiClient (APT cache will be updated later in pre_tasks)
+- name: Install FortiClient
+  ansible.builtin.apt:
+    name: forticlient
+    state: present
+
+# Register invitation code if provided
+- name: Register FortiClient invitation code
+  ansible.builtin.command:
+    cmd: "/opt/forticlient/epctrl -c {{ forticlient_invitation_code }}"
+  when: forticlient_invitation_code is defined
+  no_log: true
