@@ -1,7 +1,7 @@
 - name: Download Forticlient GPG key
   ansible.builtin.get_url:
-    url: "https://repo.fortinet.com/repo/7.0/ubuntu/DEB-GPG-KEY"
-    dest: "/usr/share/keyrings/fortinet.gpg"
+ url: "https://repo.fortinet.com/repo/forticlient/DEB-GPG-KEY"
+ dest: "/usr/share/keyrings/fortinet.gpg"
     mode: "0644"
     force: true
 
