@@ -6,10 +6,16 @@
     - vault.yml
 
   pre_tasks:
+
+  # 1. Install Fortinet key BEFORE any apt update
+    - include_tasks: tasks/forticlient.yml
+
+  # 2. Now it's safe to update apt
     - name: Run updates and upgrade packages
       apt:
         update_cache: yes
       changed_when: false
+
 
   roles:
     - role: geerlingguy.dotfiles
