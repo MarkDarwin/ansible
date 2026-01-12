@@ -35,6 +35,12 @@
       Pin: origin "repo.fortinet.com"
       Pin-Priority: 1001
 
+# Update packages
+- name: Run updates and upgrade packages
+  apt:
+    update_cache: yes
+  changed_when: false
+    
 # Install FortiClient (APT cache will be updated later in pre_tasks)
 - name: Install FortiClient
   ansible.builtin.apt:
