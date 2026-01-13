@@ -69,7 +69,7 @@
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
-    mode: '0755'
+    mode: "0755"
   become: true
 
 - name: Download and dearmor Microsoft GPG key for Azure CLI
@@ -93,9 +93,9 @@
       URIs: https://packages.microsoft.com/repos/azure-cli/
       Suites: {{ az_dist_codename.stdout }}
       Components: main
-      Architectures: {{ ansible_architecture }}
+      Architectures: amd64
       Signed-By: /etc/apt/keyrings/microsoft.gpg
-    mode: '0644'
+    mode: "0644"
   become: true
 
 - name: Install azure-cli
