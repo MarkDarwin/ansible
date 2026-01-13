@@ -1,24 +1,28 @@
-- name: Install apt-transport-https
+- name: Install required packages
   ansible.builtin.apt:
-    name: apt-transport-https
-    state: latest
-    update_cache: true
-
-- name: Download hashicorp GPG key
-  ansible.builtin.get_url:
-    url: "https://apt.releases.hashicorp.com/gpg"
-    dest: "/usr/share/keyrings/hashicorp-keyring.gpg"
-    mode: "0644"
-    force: true
-
-- name: Add hashicorp repository into sources list
-  ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/hashicorp-keyring.gpg] https://apt.releases.hashicorp.com/ trixie main"
+    name:
+      - apt-transport-https
+      - ca-certificates
     state: present
-    filename: hashicorp
-
-- name: Install terraform
-  ansible.builtin.apt:
-    name: "terraform"
-    state: latest
     update_cache: true
+
+- name: Add HashiCorp repository (modern method)
+  ansible.builtin.deb822_repository:
+    name: hashicorp
+    types: [deb]
+    uris: "https://apt.releases.hashicorp.com"
+    suites: "{{ ansible_distribution_release }}"
+    components: [main]
+    architectures: amd64
+    signed_by: "https://apt.releases.hashicorp.com/gpg"
+    state: present
+    enabled: true
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install Terraform
+  ansible.builtin.apt:
+    name: terraform
+    state: latest
