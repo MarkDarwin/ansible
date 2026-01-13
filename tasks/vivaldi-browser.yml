@@ -7,9 +7,15 @@
 - name: Download Vivaldi GPG key
   ansible.builtin.get_url:
     url: "https://repo.vivaldi.com/stable/linux_signing_key.pub"
-    dest: "/usr/share/keyrings/vivaldi-browser-keyring.gpg"
+    dest: "/usr/share/keyrings/vivaldi-browser-keyring.pub"
     mode: "0644"
     force: true
+
+- name: Dearmor Vivaldi GPG key
+  ansible.builtin.command:
+    cmd: "gpg --dearmor -o /usr/share/keyrings/vivaldi-browser-keyring.gpg /usr/share/keyrings/vivaldi-browser-keyring.pub"
+    creates: "/usr/share/keyrings/vivaldi-browser-keyring.gpg"
+  become: true
 
 - name: Add Vivaldi repository into sources list
   ansible.builtin.apt_repository:
