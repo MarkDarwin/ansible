@@ -4,27 +4,20 @@
     state: latest
     update_cache: true
 
-- name: Download Vivaldi GPG key
-  ansible.builtin.get_url:
-    url: "https://repo.vivaldi.com/stable/linux_signing_key.pub"
-    dest: "/usr/share/keyrings/vivaldi-browser-keyring.pub"
-    mode: "0644"
-    force: true
-
-- name: Dearmor Vivaldi GPG key
-  ansible.builtin.command:
-    cmd: "gpg --dearmor -o /usr/share/keyrings/vivaldi-browser-keyring.gpg /usr/share/keyrings/vivaldi-browser-keyring.pub"
-    creates: "/usr/share/keyrings/vivaldi-browser-keyring.gpg"
-  become: true
-
-- name: Add Vivaldi repository into sources list
-  ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/vivaldi-browser-keyring.gpg] https://repo.vivaldi.com/stable/deb/ stable main"
+- name: Add Vivaldi repository with key
+  ansible.builtin.deb822_repository:
+    name: vivaldi-browser
+    types: [deb]
+    uris: "https://repo.vivaldi.com/stable/deb/"
+    suites: stable
+    components: [main]
+    architectures: amd64
+    signed_by: "https://repo.vivaldi.com/stable/linux_signing_key.pub"
     state: present
-    filename: vivaldi-browser
+    enabled: true
 
-- name: Install vivaldi-browser
+- name: Install Vivaldi browser
   ansible.builtin.apt:
-    name: "vivaldi-stable"
+    name: vivaldi-stable
     state: latest
     update_cache: true
