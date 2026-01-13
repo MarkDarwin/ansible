@@ -8,11 +8,16 @@
 - name: Download Microsoft GPG key
   ansible.builtin.get_url:
     url: "https://packages.microsoft.com/keys/microsoft.asc"
-    dest: "/usr/share/keyrings/microsoft.gpg"
+    dest: "/usr/share/keyrings/microsoft.asc"
     mode: "0644"
     force: true
   become: true
 
+- name: Dearmor Microsoft GPG key
+  ansible.builtin.command:
+    cmd: "gpg --dearmor -o /usr/share/keyrings/microsoft.gpg /usr/share/keyrings/microsoft.asc"
+    creates: "/usr/share/keyrings/microsoft.gpg"
+  become: true
 - name: Add microsoft-edge-stable repository into sources list
   ansible.builtin.apt_repository:
     repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main"
