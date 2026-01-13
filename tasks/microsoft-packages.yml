@@ -52,6 +52,13 @@
     update_cache: true
   become: true
 
+- name: Add microsoft-azure-cli repository into sources list
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli stable main"
+    state: present
+    filename: microsoft-azure-cli
+  become: true
+
 - name: Install azure-cli
   ansible.builtin.apt:
     name: "azure-cli"
