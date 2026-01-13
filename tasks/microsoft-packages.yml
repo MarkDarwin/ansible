@@ -3,6 +3,7 @@
     name: apt-transport-https
     state: latest
     update_cache: true
+  become: true
 
 - name: Download Microsoft GPG key
   ansible.builtin.get_url:
@@ -10,35 +11,41 @@
     dest: "/usr/share/keyrings/microsoft.gpg"
     mode: "0644"
     force: true
+  become: true
 
 - name: Add microsoft-edge-stable repository into sources list
   ansible.builtin.apt_repository:
     repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main"
     state: present
     filename: microsoft-edge
+  become: true
 
 - name: Install microsoft-edge-stable
   ansible.builtin.apt:
     name: "microsoft-edge-stable"
     state: latest
     update_cache: true
+  become: true
 
 - name: Remove auto-created Microsoft Edge repo
   ansible.builtin.file:
     path: /etc/apt/sources.list.d/microsoft-edge.list
     state: absent
+  become: true
 
 - name: Add microsoft-vscode-stable repository into sources list
   ansible.builtin.apt_repository:
     repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main"
     state: present
     filename: microsoft-vscode
+  become: true
 
 - name: Install microsoft-vscode
   ansible.builtin.apt:
     name: "code"
     state: latest
     update_cache: true
+  become: true
 
 - name: Install azure-cli
   ansible.builtin.apt:
