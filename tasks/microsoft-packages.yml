@@ -52,15 +52,55 @@
     update_cache: true
   become: true
 
-- name: Add microsoft-azure-cli repository into sources list
-  ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli stable main"
+# Azure CLI installation (official Microsoft method)
+- name: Ensure dependencies for Azure CLI
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
     state: present
-    filename: microsoft-azure-cli
+    update_cache: true
+  become: true
+
+- name: Ensure /etc/apt/keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Download and dearmor Microsoft GPG key for Azure CLI
+  ansible.builtin.shell: |
+    curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/keyrings/microsoft.gpg > /dev/null
+    chmod go+r /etc/apt/keyrings/microsoft.gpg
+  args:
+    creates: /etc/apt/keyrings/microsoft.gpg
+  become: true
+
+- name: Get distribution codename for Azure CLI repo
+  ansible.builtin.command: lsb_release -cs
+  register: az_dist_codename
+  changed_when: false
+
+- name: Create azure-cli.sources file
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/azure-cli.sources
+    content: |
+      Types: deb
+      URIs: https://packages.microsoft.com/repos/azure-cli/
+      Suites: {{ az_dist_codename.stdout }}
+      Components: main
+      Architectures: {{ ansible_architecture }}
+      Signed-By: /etc/apt/keyrings/microsoft.gpg
+    mode: '0644'
   become: true
 
 - name: Install azure-cli
   ansible.builtin.apt:
-    name: "azure-cli"
+    name: azure-cli
     state: latest
     update_cache: true
+  become: true
