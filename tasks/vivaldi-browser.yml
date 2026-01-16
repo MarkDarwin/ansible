@@ -1,8 +1,35 @@
-- name: Install apt-transport-https
-  ansible.builtin.apt:
-    name: apt-transport-https
-    state: latest
-    update_cache: true
+- name: Ensure keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Download Vivaldi signing key (ASCII armored)
+  ansible.builtin.get_url:
+    url: https://repo.vivaldi.com/stable/linux_signing_key.pub
+    dest: /etc/apt/keyrings/vivaldi.asc
+    mode: '0644'
+  become: true
+
+- name: Convert Vivaldi key to GPG format
+  ansible.builtin.command:
+    cmd: gpg --dearmor --output /etc/apt/keyrings/vivaldi.gpg /etc/apt/keyrings/vivaldi.asc
+  args:
+    creates: /etc/apt/keyrings/vivaldi.gpg
+  become: true
+
+- name: Remove ASCII key after dearmor
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/vivaldi.asc
+    state: absent
+  become: true
+
+- name: Ensure permissions on Vivaldi key
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/vivaldi.gpg
+    mode: '0644'
+  become: true
 
 - name: Add Vivaldi repository with key
   ansible.builtin.deb822_repository:
@@ -12,12 +39,15 @@
     suites: stable
     components: [main]
     architectures: amd64
-    signed_by: "https://repo.vivaldi.com/stable/linux_signing_key.pub"
+    signed_by: "/etc/apt/keyrings/vivaldi.gpg"
     state: present
     enabled: true
+    update_cache: true
 
 - name: Install Vivaldi browser
   ansible.builtin.apt:
     name: vivaldi-stable
     state: latest
     update_cache: true
+
+
