@@ -49,4 +49,9 @@
     state: latest
     update_cache: true
 
+- name: Remove vendor-created Vivaldi repo file
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/vivaldi.list
+    state: absent
+  become: true
 
