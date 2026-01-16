@@ -14,5 +14,10 @@
     "copilot.advancedSettings": {
         "contextualCompletion": "enabled",
         "useWorkspaceContext": true
-    }
+    },
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+        {
+            "text": "Be extremely detailed with the files changes and the reasons for change. Add emoji where appropriate"
+        }
+    ]
 }
