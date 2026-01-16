@@ -18,14 +18,15 @@ reboot
 ```bash
 cp falcon-sensor.deb ~/
 sudo apt install curl
-curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/requirements.yml -o requirements.yml
-curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/init.sh -o init.sh
+curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/bootstrap.sh -o bootstrap.sh
 chmod +x init.sh
 sudo ./init.sh
 ./ansible.sh
 ```
 
-- This command downloads and runs the latest `init.sh` directly from the main branch.
+> **Caution:** On the first run of the Ansible playbooks, you may see a failure due to duplicate sources. This is automatically cleaned up on the second run, so simply re-run the playbook to proceed.
+
+- This command downloads and runs the latest `bootstrap.sh` directly from the main branch.
 - You will need `curl` installed (usually present by default).
 - The script will prompt for your 1Password Service Account Token if not set as an environment variable.
 
