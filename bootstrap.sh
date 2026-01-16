@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Bootstrap wrapper - enables one-line curl | bash execution
 # Usage: curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/bootstrap.sh | bash
 
@@ -11,8 +11,17 @@ NC="\033[0m"
 
 # Check if running with sudo
 if [[ $EUID -ne 0 ]]; then
-    echo -e "${YELLOW}[INFO] This script needs sudo privileges. Re-running with sudo...${NC}"
-    exec sudo bash "$0" "$@"
+    # Detect if running from a pipe (e.g., curl | bash)
+    if [ -t 0 ]; then
+        # Running from a file, safe to re-exec
+        echo -e "${YELLOW}[INFO] This script needs sudo privileges. Re-running with sudo...${NC}"
+        exec sudo bash "$0" "$@"
+    else
+        # Running from a pipe, cannot re-exec
+        echo -e "${YELLOW}[WARNING] This script needs sudo privileges. Please run with: curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/bootstrap.sh | sudo bash${NC}"
+        # Optionally, exit or continue (here, we exit to avoid partial execution)
+        exit 1
+    fi
 fi
 
 # Download the main init script
