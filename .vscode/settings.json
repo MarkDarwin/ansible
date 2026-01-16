@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "*.md": "markdown"
+    },
+    "copilot.workspaceInstructions": [
+        "You are working inside a governed workspace.",
+        "Always follow the global standards located in /style-guides/global.",
+        "Always check for project-specific overrides in /style-guides/local-overrides.",
+        "Local overrides take precedence over global standards.",
+        "When generating code, documentation, or runbooks, explicitly apply the relevant rules.",
+        "When a rule is missing or unclear, propose improvements to /style-guides/global/meta/improvement-queue.md.",
+        "Never modify style-guide files directly; always propose changes as Markdown or diffs."
+    ],
+    "copilot.advancedSettings": {
+        "contextualCompletion": "enabled",
+        "useWorkspaceContext": true
+    }
+}
