@@ -42,7 +42,6 @@
     signed_by: "/etc/apt/keyrings/vivaldi.gpg"
     state: present
     enabled: true
-    update_cache: true
 
 - name: Install Vivaldi browser
   ansible.builtin.apt:
