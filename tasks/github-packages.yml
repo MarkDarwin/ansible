@@ -10,7 +10,12 @@
     - repo: "sharkdp/bat"
       package: "bat"
       pattern: '^bat_[0-9.]+_amd64\.deb$'
-    # USe single quotes to avoid YAML parsing issues with regex
+    - repo: "microsoft/Powershell"
+      package: "powershell"
+      # pattern match this: powershell_7.5.4-1.deb_amd64.deb
+      pattern: '^powershell_[0-9.+-]+\.deb_amd64\.deb$'
+
+    # Use single quotes to avoid YAML parsing issues with regex
     # Add more packages here as needed
   loop_control:
     loop_var: package
