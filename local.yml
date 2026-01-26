@@ -6,16 +6,14 @@
     - vault.yml
 
   pre_tasks:
-
-  # 1. Install Fortinet key BEFORE any apt update
+    # 1. Install Fortinet key BEFORE any apt update
     - include_tasks: tasks/forticlient.yml
 
-  # 2. Now it's safe to update apt
+    # 2. Now it's safe to update apt
     - name: Run updates and upgrade packages
       apt:
         update_cache: yes
       changed_when: false
-
 
   roles:
     - role: geerlingguy.dotfiles
@@ -32,7 +30,6 @@
     - include_tasks: tasks/configure-terminal.yml
     - include_tasks: tasks/system-tweaks.yml
     - include_tasks: tasks/microsoft-packages.yml
-    - include_tasks: tasks/brave-browser.yml
     - include_tasks: tasks/vivaldi-browser.yml
     - include_tasks: tasks/terraform.yml
     - include_tasks: tasks/obsidian.yml
