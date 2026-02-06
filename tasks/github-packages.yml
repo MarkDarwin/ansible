@@ -1,4 +1,3 @@
-# tasks/github-packages.yml
 - name: Install/update packages from GitHub releases
   include_role:
     name: github_deb_installer
@@ -12,10 +11,16 @@
       pattern: '^bat_[0-9.]+_amd64\.deb$'
     - repo: "PowerShell/PowerShell"
       package: "powershell"
-      # pattern match this: powershell_7.5.4-1.deb_amd64.deb
       pattern: '^powershell_[0-9.+-]+\.deb_amd64\.deb$'
-
-    # Use single quotes to avoid YAML parsing issues with regex
-    # Add more packages here as needed
   loop_control:
     loop_var: package
+  when: not (package.package == 'powershell' and ansible_distribution == 'Debian')
+
+# Then add PowerShell via snap for Debian
+- name: Install PowerShell via snap on Debian
+  community.general.snap:
+    name: powershell
+    classic: yes
+    state: present
+  become: true
+  when: ansible_distribution == 'Debian'
