@@ -1,4 +1,5 @@
-- name: Install/update packages from GitHub releases
+# tasks/github-packages.yml
+- name: Install/update packages from GitHub releases (excluding PowerShell)
   include_role:
     name: github_deb_installer
   vars:
@@ -9,18 +10,95 @@
     - repo: "sharkdp/bat"
       package: "bat"
       pattern: '^bat_[0-9.]+_amd64\.deb$'
-    - repo: "PowerShell/PowerShell"
-      package: "powershell"
-      pattern: '^powershell_[0-9.+-]+\.deb_amd64\.deb$'
+    # Add other .deb packages here
   loop_control:
     loop_var: package
-  when: not (package.package == 'powershell' and ansible_distribution == 'Debian')
 
-# Then add PowerShell via snap for Debian
-- name: Install PowerShell via snap on Debian
-  community.general.snap:
-    name: powershell
-    classic: yes
-    state: present
+# PowerShell installation via tarball (works on both Ubuntu and Debian)
+- name: Check if PowerShell is installed
+  ansible.builtin.stat:
+    path: /opt/microsoft/powershell/7/pwsh
+  register: pwsh_binary
+
+- name: Get installed PowerShell version
+  ansible.builtin.command: /opt/microsoft/powershell/7/pwsh --version
+  register: pwsh_installed_version
+  failed_when: false
+  changed_when: false
+  when: pwsh_binary.stat.exists
+
+- name: Get latest PowerShell version from GitHub
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/PowerShell/PowerShell/releases/latest
+    return_content: yes
+  register: pwsh_latest_release
+  changed_when: false
+
+- name: Set PowerShell version facts
+  ansible.builtin.set_fact:
+    pwsh_latest_version: "{{ pwsh_latest_release.json.tag_name | regex_replace('^v', '') }}"
+    pwsh_needs_update: >-
+      {{
+        not pwsh_binary.stat.exists or
+        (pwsh_installed_version.stdout is defined and
+         pwsh_latest_release.json.tag_name not in pwsh_installed_version.stdout)
+      }}
+
+- name: Create PowerShell directory
+  ansible.builtin.file:
+    path: /opt/microsoft/powershell/7
+    state: directory
+    mode: '0755'
   become: true
-  when: ansible_distribution == 'Debian'
+  when: pwsh_needs_update
+
+- name: Download PowerShell tarball
+  ansible.builtin.get_url:
+    url: "https://github.com/PowerShell/PowerShell/releases/download/v{{ pwsh_latest_version }}/powershell-{{ pwsh_latest_version }}-linux-x64.tar.gz"
+    dest: /tmp/powershell.tar.gz
+    mode: '0644'
+  when: pwsh_needs_update
+
+- name: Remove old PowerShell installation
+  ansible.builtin.file:
+    path: /opt/microsoft/powershell/7
+    state: absent
+  become: true
+  when: pwsh_needs_update and pwsh_binary.stat.exists
+
+- name: Recreate PowerShell directory
+  ansible.builtin.file:
+    path: /opt/microsoft/powershell/7
+    state: directory
+    mode: '0755'
+  become: true
+  when: pwsh_needs_update
+
+- name: Extract PowerShell tarball
+  ansible.builtin.unarchive:
+    src: /tmp/powershell.tar.gz
+    dest: /opt/microsoft/powershell/7
+    remote_src: yes
+  become: true
+  when: pwsh_needs_update
+
+- name: Set PowerShell executable permissions
+  ansible.builtin.file:
+    path: /opt/microsoft/powershell/7/pwsh
+    mode: '0755'
+  become: true
+  when: pwsh_needs_update
+
+- name: Create PowerShell symlink
+  ansible.builtin.file:
+    src: /opt/microsoft/powershell/7/pwsh
+    dest: /usr/local/bin/pwsh
+    state: link
+    force: true
+  become: true
+
+- name: Clean up PowerShell tarball
+  ansible.builtin.file:
+    path: /tmp/powershell.tar.gz
+    state: absent
+  when: pwsh_needs_update
