@@ -18,6 +18,7 @@
     cmd: "gpg --dearmor -o /usr/share/keyrings/microsoft.gpg /usr/share/keyrings/microsoft.asc"
     creates: "/usr/share/keyrings/microsoft.gpg"
   become: true
+
 - name: Add microsoft-edge-stable repository into sources list
   ansible.builtin.apt_repository:
     repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main"
@@ -52,55 +53,51 @@
     update_cache: true
   become: true
 
-# Azure CLI installation (official Microsoft method)
+# Azure CLI installation (pip-based method for universal compatibility)
 - name: Ensure dependencies for Azure CLI
   ansible.builtin.apt:
     name:
-      - apt-transport-https
-      - ca-certificates
-      - curl
-      - gnupg
-      - lsb-release
+      - python3
+      - python3-pip
+      - python3-venv
     state: present
     update_cache: true
   become: true
 
-- name: Ensure /etc/apt/keyrings directory exists
+- name: Remove existing Azure CLI virtual environment
   ansible.builtin.file:
-    path: /etc/apt/keyrings
-    state: directory
-    mode: "0755"
+    path: /opt/azcli
+    state: absent
   become: true
 
-- name: Download and dearmor Microsoft GPG key for Azure CLI
-  ansible.builtin.shell: |
-    curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/keyrings/microsoft.gpg > /dev/null
-    chmod go+r /etc/apt/keyrings/microsoft.gpg
-  args:
-    creates: /etc/apt/keyrings/microsoft.gpg
+- name: Create Azure CLI virtual environment
+  ansible.builtin.command:
+    cmd: python3 -m venv /opt/azcli
+    creates: /opt/azcli/bin/activate
   become: true
 
-- name: Get distribution codename for Azure CLI repo
-  ansible.builtin.command: lsb_release -cs
-  register: az_dist_codename
-  changed_when: false
-
-- name: Create azure-cli.sources file
-  ansible.builtin.copy:
-    dest: /etc/apt/sources.list.d/azure-cli.sources
-    content: |
-      Types: deb
-      URIs: https://packages.microsoft.com/repos/azure-cli/
-      Suites: {{ az_dist_codename.stdout }}
-      Components: main
-      Architectures: amd64
-      Signed-By: /etc/apt/keyrings/microsoft.gpg
-    mode: "0644"
+- name: Upgrade pip, setuptools, and wheel in Azure CLI venv
+  ansible.builtin.pip:
+    name:
+      - pip
+      - setuptools
+      - wheel
+    state: latest
+    virtualenv: /opt/azcli
+    virtualenv_command: python3 -m venv
   become: true
 
-- name: Install azure-cli
-  ansible.builtin.apt:
+- name: Install azure-cli in virtual environment
+  ansible.builtin.pip:
     name: azure-cli
     state: latest
-    update_cache: true
+    virtualenv: /opt/azcli
+  become: true
+
+- name: Create symlink for az command
+  ansible.builtin.file:
+    src: /opt/azcli/bin/az
+    dest: /usr/local/bin/az
+    state: link
+    force: true
   become: true
