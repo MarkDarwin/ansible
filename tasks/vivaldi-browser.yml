@@ -31,6 +31,13 @@
     mode: '0644'
   become: true
 
+- name: Ensure python3-debian is installed for deb822_repository module
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+    update_cache: true
+  become: true
+
 - name: Add Vivaldi repository with key
   ansible.builtin.deb822_repository:
     name: vivaldi-browser
@@ -42,16 +49,17 @@
     signed_by: "/etc/apt/keyrings/vivaldi.gpg"
     state: present
     enabled: true
+  become: true
 
 - name: Install Vivaldi browser
   ansible.builtin.apt:
     name: vivaldi-stable
     state: latest
     update_cache: true
+  become: true
 
 - name: Remove vendor-created Vivaldi repo file
   ansible.builtin.file:
     path: /etc/apt/sources.list.d/vivaldi.list
     state: absent
   become: true
-
