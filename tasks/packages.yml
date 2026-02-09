@@ -9,6 +9,7 @@
       - zsh
       - alacritty
       - remmina
+      - micro
     state: present
 
 - name: Update apt cache
