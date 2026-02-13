@@ -19,9 +19,18 @@ reboot
 cp falcon-sensor.deb ~/
 sudo apt install curl
 curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/bootstrap.sh -o bootstrap.sh
-chmod +x init.sh
-sudo ./init.sh
+chmod +x bootstrap.sh
+sudo ./bootstrap.sh
 ./ansible.sh
+```
+
+```bash
+# cd into the folder containing the certificates for the VPN
+for f in *.pem; do
+    sudo cp "$f" "/usr/local/share/ca-certificates/${f%.pem}.crt"
+done
+
+sudo update-ca-certificates
 ```
 
 > **Caution:** On the first run of the Ansible playbooks, you may see a failure due to duplicate sources. This is automatically cleaned up on the second run, so simply re-run the playbook to proceed.
