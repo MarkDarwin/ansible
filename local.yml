@@ -8,6 +8,7 @@
   pre_tasks:
     # 1. Install Fortinet key BEFORE any apt update
     - include_tasks: tasks/forticlient.yml
+      tags: forticlient
 
     # 2. Now it's safe to update apt
     - name: Run updates and upgrade packages
