@@ -1,0 +1,34 @@
+- name: Install apt-transport-https
+  ansible.builtin.apt:
+    name: apt-transport-https
+    state: latest
+    update_cache: true
+  become: true
+
+- name: Download OneDrive GPG key
+  ansible.builtin.get_url:
+    url: "https://download.opensuse.org/repositories/home:/npreining:/debian-ubuntu-onedrive/Debian_13/Release.key"
+    dest: "/usr/share/keyrings/obs-onedrive.asc"
+    mode: "0644"
+    force: true
+  become: true
+
+- name: Dearmor OneDrive GPG key
+  ansible.builtin.command:
+    cmd: "gpg --dearmor -o /usr/share/keyrings/obs-onedrive.gpg /usr/share/keyrings/microsoft.asc"
+    creates: "/usr/share/keyrings/obs-onedrive.gpg"
+  become: true
+
+- name: Add OneDrive repository into sources list
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/obs-onedrive.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-ubuntu-onedrive/Debian_13/ ./"
+    state: present
+    filename: obs-onedrive
+  become: true
+
+- name: Install onedrive
+  ansible.builtin.apt:
+    name: "onedrive"
+    state: latest
+    update_cache: true
+  become: true
