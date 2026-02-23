@@ -33,11 +33,11 @@
     update_cache: true
   become: true
 
-- name: Remove auto-created Microsoft Edge repo
-  ansible.builtin.file:
-    path: /etc/apt/sources.list.d/microsoft-edge.list
-    state: absent
-  become: true
+#- name: Remove auto-created Microsoft Edge repo
+#  ansible.builtin.file:
+#    path: /etc/apt/sources.list.d/microsoft-edge.list
+#    state: absent
+#  become: true
 
 - name: Add microsoft-vscode-stable repository into sources list
   ansible.builtin.apt_repository:
