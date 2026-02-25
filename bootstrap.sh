@@ -31,9 +31,13 @@ trap 'rm -rf "$TEMP_DIR"' EXIT
 echo -e "${GREEN}[INFO] Downloading init.sh...${NC}"
 curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/init.sh -o "$TEMP_DIR/init.sh"
 
-# Download Falcon Sensor if available (optional)
+
+# Download Falcon Sensor packages if available (optional)
 if curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/falcon-sensor.deb -o "$TEMP_DIR/falcon-sensor.deb" 2>/dev/null; then
     echo -e "${GREEN}[INFO] Downloaded falcon-sensor.deb${NC}"
+fi
+if curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/falcon-sensor.rpm -o "$TEMP_DIR/falcon-sensor.rpm" 2>/dev/null; then
+    echo -e "${GREEN}[INFO] Downloaded falcon-sensor.rpm${NC}"
 fi
 
 # Make executable and run

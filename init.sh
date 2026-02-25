@@ -19,42 +19,64 @@ GREEN="\033[0;32m"
 YELLOW="\033[1;33m"
 NC="\033[0m"
 
-# Section 1: Update package lists
-echo -e "${GREEN}[INFO] Updating package lists...${NC}"
+
+# Section 1: Update package lists (Debian or Fedora)
+echo -e "${GREEN}[INFO] Detecting OS and updating package lists...${NC}"
 if command -v apt-get >/dev/null 2>&1; then
+	OS_FAMILY="debian"
 	sudo apt-get update -y
+elif command -v dnf >/dev/null 2>&1; then
+	OS_FAMILY="fedora"
+	sudo dnf makecache -y
+elif command -v yum >/dev/null 2>&1; then
+	OS_FAMILY="fedora"
+	sudo yum makecache -y
 else
-	echo -e "${RED}[ERROR] This script only supports Debian-based systems (apt-get required).${NC}" >&2
+	echo -e "${RED}[ERROR] This script only supports Debian or Fedora-based systems (apt-get, dnf, or yum required).${NC}" >&2
 	exit 1
 fi
 
-# Section 2: Install necessary base packages
-REQUIRED_PACKAGES=(curl sudo gnupg lsb-release)
-
-install_packages() {
-	local packages=("${@}")
-	if ! command -v apt-get >/dev/null 2>&1; then
-		echo -e "${RED}[ERROR] This script only supports Debian-based systems (apt-get required).${NC}" >&2
-		exit 1
-	fi
-	for pkg in "${packages[@]}"; do
-		if ! dpkg -s "$pkg" >/dev/null 2>&1; then
-			echo -e "${GREEN}[INFO] Installing $pkg...${NC}"
-			sudo apt-get install -y "$pkg"
-		else
-			echo -e "${YELLOW}[INFO] $pkg already installed.${NC}"
-		fi
-	done
-}
-
 echo -e "${GREEN}[INFO] Ensuring required base packages are installed...${NC}"
-install_packages "${REQUIRED_PACKAGES[@]}"
-
-# Section 3: Install project dependencies
-PROJECT_PACKAGES=(git python3 python3-pip ansible)
-
 echo -e "${GREEN}[INFO] Ensuring project dependencies are installed...${NC}"
-install_packages "${PROJECT_PACKAGES[@]}"
+
+# Section 2: Install necessary base packages
+if [[ "$OS_FAMILY" == "debian" ]]; then
+	REQUIRED_PACKAGES=(curl sudo gnupg lsb-release)
+	PROJECT_PACKAGES=(git python3 python3-pip ansible)
+	install_debian_packages() {
+		local packages=("${@}")
+		for pkg in "${packages[@]}"; do
+			if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+				echo -e "${GREEN}[INFO] Installing $pkg...${NC}"
+				sudo apt-get install -y "$pkg"
+			else
+				echo -e "${YELLOW}[INFO] $pkg already installed.${NC}"
+			fi
+		done
+	}
+	echo -e "${GREEN}[INFO] Ensuring required base packages are installed...${NC}"
+	install_debian_packages "${REQUIRED_PACKAGES[@]}"
+	echo -e "${GREEN}[INFO] Ensuring project dependencies are installed...${NC}"
+	install_debian_packages "${PROJECT_PACKAGES[@]}"
+elif [[ "$OS_FAMILY" == "fedora" ]]; then
+	REQUIRED_PACKAGES=(curl sudo gnupg2 redhat-lsb-core)
+	PROJECT_PACKAGES=(git python3 python3-pip ansible)
+	install_fedora_packages() {
+		local packages=("${@}")
+		for pkg in "${packages[@]}"; do
+			if ! rpm -q "$pkg" >/dev/null 2>&1; then
+				echo -e "${GREEN}[INFO] Installing $pkg...${NC}"
+				sudo dnf install -y "$pkg" || sudo yum install -y "$pkg"
+			else
+				echo -e "${YELLOW}[INFO] $pkg already installed.${NC}"
+			fi
+		done
+	}
+	echo -e "${GREEN}[INFO] Ensuring required base packages are installed...${NC}"
+	install_fedora_packages "${REQUIRED_PACKAGES[@]}"
+	echo -e "${GREEN}[INFO] Ensuring project dependencies are installed...${NC}"
+	install_fedora_packages "${PROJECT_PACKAGES[@]}"
+fi
 
 # Install roles from requirements.yml if present
 USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
@@ -66,15 +88,30 @@ else
 	echo -e "${YELLOW}[INFO] No requirements.yml file found. Skipping Ansible roles installation.${NC}"
 fi
 
+
 # Install 1Password CLI (op) if not present
 if ! command -v op >/dev/null 2>&1; then
 	echo -e "${GREEN}[INFO] Installing 1Password CLI...${NC}"
-	if ! grep -q "downloads.1password.com/linux/debian" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
-		curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
-		echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main" | sudo tee /etc/apt/sources.list.d/1password.list
-		sudo apt-get update -y
+	if [[ "$OS_FAMILY" == "debian" ]]; then
+		if ! grep -q "downloads.1password.com/linux/debian" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
+			curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
+			echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main" | sudo tee /etc/apt/sources.list.d/1password.list
+			sudo apt-get update -y
+		fi
+		sudo apt-get install -y 1password-cli
+	elif [[ "$OS_FAMILY" == "fedora" ]]; then
+		sudo rpm --import https://downloads.1password.com/linux/keys/1password.asc
+		sudo tee /etc/yum.repos.d/1password.repo > /dev/null <<EOF
+[1password]
+name=1Password Stable Channel
+baseurl=https://downloads.1password.com/linux/rpm/stable/
+enabled=1
+gpgcheck=1
+gpgkey=https://downloads.1password.com/linux/keys/1password.asc
+EOF
+		sudo dnf makecache -y || sudo yum makecache -y
+		sudo dnf install -y 1password-cli || sudo yum install -y 1password-cli
 	fi
-	sudo apt-get install -y 1password-cli
 else
 	echo -e "${YELLOW}[INFO] 1Password CLI already installed.${NC}"
 fi
@@ -164,26 +201,38 @@ USE_1PASSWORD_AGENT=false
 if has_desktop_env; then
 	echo -e "${GREEN}[INFO] Desktop environment detected. Installing and configuring 1Password Desktop app for SSH agent.${NC}"
 	
-	# Install 1Password Desktop app if not present
-	if ! command -v 1password >/dev/null 2>&1; then
-		echo -e "${GREEN}[INFO] Installing 1Password Desktop app...${NC}"
-		if ! grep -q "downloads.1password.com/linux/debian" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
-			curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
-			echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(lsb_release -cs) stable main" | sudo tee /etc/apt/sources.list.d/1password-app.list
-			sudo apt-get update -y
+		if ! command -v 1password >/dev/null 2>&1; then
+			echo -e "${GREEN}[INFO] Installing 1Password Desktop app...${NC}"
+			if [[ "$OS_FAMILY" == "debian" ]]; then
+				if ! grep -q "downloads.1password.com/linux/debian" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
+					curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
+					echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(lsb_release -cs) stable main" | sudo tee /etc/apt/sources.list.d/1password-app.list
+					sudo apt-get update -y
+				fi
+				sudo apt-get install -y 1password
+			elif [[ "$OS_FAMILY" == "fedora" ]]; then
+				sudo rpm --import https://downloads.1password.com/linux/keys/1password.asc
+				sudo tee /etc/yum.repos.d/1password.repo > /dev/null <<EOF
+	[1password]
+	name=1Password Stable Channel
+	baseurl=https://downloads.1password.com/linux/rpm/stable/
+	enabled=1
+	gpgcheck=1
+	gpgkey=https://downloads.1password.com/linux/keys/1password.asc
+	EOF
+				sudo dnf makecache -y || sudo yum makecache -y
+				sudo dnf install -y 1password || sudo yum install -y 1password
+			fi
+			echo -e "${YELLOW}[IMPORTANT] Please follow these steps:${NC}"
+			echo -e "${YELLOW}  1. Launch 1Password Desktop app${NC}"
+			echo -e "${YELLOW}  2. Sign in to your account${NC}"
+			echo -e "${YELLOW}  3. Go to Settings > Developer${NC}"
+			echo -e "${YELLOW}  4. Enable 'Use the SSH agent'${NC}"
+			echo -e "${YELLOW}  5. Enable '1Password CLI'${NC}"
+			read -p "Press Enter when you've completed these steps..."
+		else
+			echo -e "${YELLOW}[INFO] 1Password Desktop app already installed.${NC}"
 		fi
-		sudo apt-get install -y 1password
-		
-		echo -e "${YELLOW}[IMPORTANT] Please follow these steps:${NC}"
-		echo -e "${YELLOW}  1. Launch 1Password Desktop app${NC}"
-		echo -e "${YELLOW}  2. Sign in to your account${NC}"
-		echo -e "${YELLOW}  3. Go to Settings > Developer${NC}"
-		echo -e "${YELLOW}  4. Enable 'Use the SSH agent'${NC}"
-		echo -e "${YELLOW}  5. Enable '1Password CLI'${NC}"
-		read -p "Press Enter when you've completed these steps..."
-	else
-		echo -e "${YELLOW}[INFO] 1Password Desktop app already installed.${NC}"
-	fi
 	
 	# Check if 1Password SSH agent is available and working
 	if wait_for_1password_ssh_agent; then
@@ -323,16 +372,28 @@ chown "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$ANSIBLE_SH_PATH"
 chmod 700 "$ANSIBLE_SH_PATH"
 echo -e "${GREEN}[INFO] $ANSIBLE_SH_PATH created and made executable.${NC}"
 
+
 # Section 10: Install CrowdStrike Falcon Sensor (optional)
 FALCON_SENSOR_DEB="falcon-sensor.deb"
-FALCON_SENSOR_PATH="$(dirname "$(readlink -f "$0")")/$FALCON_SENSOR_DEB"
+FALCON_SENSOR_RPM="falcon-sensor.rpm"
+FALCON_SENSOR_PATH_DEB="$(dirname "$(readlink -f "$0")")/$FALCON_SENSOR_DEB"
+FALCON_SENSOR_PATH_RPM="$(dirname "$(readlink -f "$0")")/$FALCON_SENSOR_RPM"
 
-if [[ -f "$FALCON_SENSOR_PATH" ]]; then
-	echo -e "${GREEN}[INFO] Installing CrowdStrike Falcon Sensor from $FALCON_SENSOR_PATH...${NC}"
-	sudo apt-get install -y "$FALCON_SENSOR_PATH"
-	
+if [[ "$OS_FAMILY" == "debian" && -f "$FALCON_SENSOR_PATH_DEB" ]]; then
+	echo -e "${GREEN}[INFO] Installing CrowdStrike Falcon Sensor from $FALCON_SENSOR_PATH_DEB...${NC}"
+	sudo apt-get install -y "$FALCON_SENSOR_PATH_DEB"
 	FALCON_INVITE_CODE=$(op item get --vault "homelab" "falcon-sensor-invite-code" --field password --reveal 2>/dev/null || true)
-	
+	if [[ -n "$FALCON_INVITE_CODE" ]]; then
+		echo -e "${GREEN}[INFO] Registering Falcon Sensor with invite code...${NC}"
+		sudo /opt/CrowdStrike/falconctl -s -f --cid="$FALCON_INVITE_CODE"
+		echo -e "${GREEN}[INFO] CrowdStrike Falcon Sensor installed and registered successfully.${NC}"
+	else
+		echo -e "${YELLOW}[WARN] Could not fetch Falcon Sensor invite code. Skipping registration.${NC}"
+	fi
+elif [[ "$OS_FAMILY" == "fedora" && -f "$FALCON_SENSOR_PATH_RPM" ]]; then
+	echo -e "${GREEN}[INFO] Installing CrowdStrike Falcon Sensor from $FALCON_SENSOR_PATH_RPM...${NC}"
+	sudo dnf install -y "$FALCON_SENSOR_PATH_RPM" || sudo yum install -y "$FALCON_SENSOR_PATH_RPM"
+	FALCON_INVITE_CODE=$(op item get --vault "homelab" "falcon-sensor-invite-code" --field password --reveal 2>/dev/null || true)
 	if [[ -n "$FALCON_INVITE_CODE" ]]; then
 		echo -e "${GREEN}[INFO] Registering Falcon Sensor with invite code...${NC}"
 		sudo /opt/CrowdStrike/falconctl -s -f --cid="$FALCON_INVITE_CODE"
@@ -341,7 +402,7 @@ if [[ -f "$FALCON_SENSOR_PATH" ]]; then
 		echo -e "${YELLOW}[WARN] Could not fetch Falcon Sensor invite code. Skipping registration.${NC}"
 	fi
 else
-	echo -e "${YELLOW}[INFO] Falcon Sensor .deb not found at $FALCON_SENSOR_PATH. Skipping installation.${NC}"
+	echo -e "${YELLOW}[INFO] Falcon Sensor package not found for this OS. Skipping installation.${NC}"
 fi
 
 echo -e "${GREEN}[SUCCESS] Bootstrap completed successfully!${NC}"

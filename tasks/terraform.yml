@@ -1,12 +1,21 @@
-- name: Install required packages
+- name: Install required packages (Debian)
   ansible.builtin.apt:
     name:
       - apt-transport-https
       - ca-certificates
     state: present
     update_cache: true
+  when: ansible_os_family == 'Debian'
 
-- name: Add HashiCorp repository (modern method)
+- name: Install required packages (Fedora)
+  ansible.builtin.dnf:
+    name:
+      - ca-certificates
+    state: present
+    update_cache: true
+  when: ansible_os_family == 'RedHat'
+
+- name: Add HashiCorp repository (Debian)
   ansible.builtin.deb822_repository:
     name: hashicorp
     types: [deb]
@@ -17,12 +26,36 @@
     signed_by: "https://apt.releases.hashicorp.com/gpg"
     state: present
     enabled: true
+  when: ansible_os_family == 'Debian'
 
-- name: Update apt cache
+- name: Add HashiCorp repository (Fedora)
+  ansible.builtin.yum_repository:
+    name: hashicorp
+    description: HashiCorp Stable - $basearch
+    baseurl: https://rpm.releases.hashicorp.com/fedora/hashicorp.repo
+    gpgkey: https://rpm.releases.hashicorp.com/gpg
+    enabled: yes
+    gpgcheck: yes
+  when: ansible_os_family == 'RedHat'
+
+- name: Update package cache (Debian)
   ansible.builtin.apt:
     update_cache: true
+  when: ansible_os_family == 'Debian'
 
-- name: Install Terraform
+- name: Update package cache (Fedora)
+  ansible.builtin.dnf:
+    update_cache: true
+  when: ansible_os_family == 'RedHat'
+
+- name: Install Terraform (Debian)
   ansible.builtin.apt:
     name: terraform
     state: latest
+  when: ansible_os_family == 'Debian'
+
+- name: Install Terraform (Fedora)
+  ansible.builtin.dnf:
+    name: terraform
+    state: latest
+  when: ansible_os_family == 'RedHat'

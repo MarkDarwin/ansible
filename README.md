@@ -1,23 +1,37 @@
 # Ansible Homelab Bootstrap
 
 This repository provides scripts and Ansible playbooks to quickly bootstrap a fresh Linux system with your preferred configuration, packages, and secrets management using 1Password.
-The expectation is we started with Debian netinstaller and chose KDE plasma, SSH server and standard system utilities
+
+The expectation is we started with a clean Linux install (Debian/Ubuntu or Fedora) and chose KDE plasma, SSH server and standard system utilities.
 
 ## Quick Start: Remote Bootstrap
 
-To run the initialization script on a fresh Linux install (Debian/Ubuntu), you can execute the following commands from your new machine:
+
+To run the initialization script on a fresh Linux install (Debian/Ubuntu or Fedora), you can execute the following commands from your new machine:
 
 
-Firstly, add the user to sudoers:
+Firstly, add the user to sudoers (Debian/Ubuntu or Fedora):
 ```bash
 su -
 usermod -aG sudo <username>
 reboot
 ```
 
+
+### For Debian/Ubuntu:
 ```bash
 cp falcon-sensor.deb ~/
 sudo apt install curl
+curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/bootstrap.sh -o bootstrap.sh
+chmod +x bootstrap.sh
+sudo ./bootstrap.sh
+./ansible.sh
+```
+
+### For Fedora:
+```bash
+cp falcon-sensor.rpm ~/
+sudo dnf install -y curl || sudo yum install -y curl
 curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/bootstrap.sh -o bootstrap.sh
 chmod +x bootstrap.sh
 sudo ./bootstrap.sh
@@ -53,7 +67,7 @@ sudo update-ca-certificates
 - Installs Ansible roles and runs playbooks
 
 ## Requirements
-- Debian/Ubuntu-based system
+- Debian/Ubuntu-based system **or** Fedora-based system
 - Internet access
 - 1Password account with CLI access
 

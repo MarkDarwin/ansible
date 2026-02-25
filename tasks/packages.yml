@@ -1,6 +1,7 @@
-- name: Install packages
-  apt:
-    name:
+# Define package lists for each OS family
+- name: Set package list for Debian
+  set_fact:
+    base_packages:
       - htop
       - curl
       - ca-certificates
@@ -10,16 +11,58 @@
       - alacritty
       - remmina
       - micro
-    state: present
+  when: ansible_os_family == 'Debian'
 
-- name: Update apt cache
+- name: Set package list for Fedora
+  set_fact:
+    base_packages:
+      - htop
+      - curl
+      - ca-certificates
+      - openssh-server
+      - tmux
+      - zsh
+      - alacritty
+      - remmina
+      - micro
+  when: ansible_os_family == 'RedHat'
+
+- name: Install packages (Debian)
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Install packages (Fedora)
+  ansible.builtin.dnf:
+    name: "{{ base_packages }}"
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Update package cache (Debian)
   ansible.builtin.apt:
     update_cache: yes
     cache_valid_time: 3600
+  when: ansible_os_family == 'Debian'
 
-- name: Update all packages to the latest version
+- name: Update package cache (Fedora)
+  ansible.builtin.dnf:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == 'RedHat'
+
+- name: Update all packages to the latest version (Debian)
   ansible.builtin.apt:
     upgrade: dist
     autoremove: yes
     autoclean: yes
     state: latest
+  when: ansible_os_family == 'Debian'
+
+- name: Update all packages to the latest version (Fedora)
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    autoremove: yes
+    update_cache: yes
+  when: ansible_os_family == 'RedHat'
