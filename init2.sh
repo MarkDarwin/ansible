@@ -47,9 +47,6 @@ else
 	exit 1
 fi
 
-echo -e "${GREEN}[INFO] Ensuring required base packages are installed...${NC}"
-echo -e "${GREEN}[INFO] Ensuring project dependencies are installed...${NC}"
-
 # Section 2: Install necessary base packages
 if [[ "$OS_FAMILY" == "debian" ]]; then
 	REQUIRED_PACKAGES=(curl sudo gnupg lsb-release)
@@ -73,7 +70,10 @@ if [[ "$OS_FAMILY" == "debian" ]]; then
 	install_debian_packages "${PROJECT_PACKAGES[@]}"
 
 	# FIX (Debian 13): Install ansible via pipx to satisfy PEP 668 (no system-wide pip installs)
-	if ! command -v ansible >/dev/null 2>&1; then
+	# Check as SUDO_USER not root — ansible lives in the user's pipx bin, root won't see it.
+	# NEW BUG FIX: 'command' is a shell builtin; sudo -u cannot exec it directly. Use bash -c.
+	_user_local_bin="$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)/.local/bin"
+	if ! sudo -u "${SUDO_USER:-$USER}" bash -c "PATH='${_user_local_bin}:$PATH' command -v ansible" >/dev/null 2>&1; then
 		echo -e "${GREEN}[INFO] Installing Ansible via pipx (Debian 13 PEP 668 compliance)...${NC}"
 		sudo -u "${SUDO_USER:-$USER}" pipx install --include-deps ansible
 		# Ensure pipx bin dir is on PATH for the remainder of this script
@@ -110,6 +110,9 @@ fi
 USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
 # BUG FIX: curl -f exits non-zero on HTTP 404; with set -e that kills the script before the
 # '-f /tmp/requirements.yml' guard can fire. Use || true so a missing remote file is handled gracefully.
+# NEW BUG FIX: remove any stale/partial file before download so a previous failed curl
+# does not leave a corrupt file that passes the -f test and breaks ansible-galaxy.
+rm -f /tmp/requirements.yml
 curl -fsSL https://raw.githubusercontent.com/markdarwin/ansible/main/requirements.yml -o /tmp/requirements.yml 2>/dev/null || true
 if [[ -f "/tmp/requirements.yml" ]]; then
 	echo -e "${GREEN}[INFO] Installing Ansible roles from requirements.yml...${NC}"
@@ -128,7 +131,7 @@ if ! command -v op >/dev/null 2>&1; then
 	echo -e "${GREEN}[INFO] Installing 1Password CLI...${NC}"
 	if [[ "$OS_FAMILY" == "debian" ]]; then
 		if ! grep -q "downloads.1password.com/linux/debian" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
-			curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
+			curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --yes -o /usr/share/keyrings/1password-archive-keyring.gpg
 			# FIX (Debian 13): 1Password's repo may not yet carry a 'trixie' suite; fall back to 'stable'
 			# which is an alias 1Password maintains independently of Debian codenames
 			# BUG FIX: was hardcoded to /amd64; use dpkg --print-architecture for arm64 support
@@ -158,7 +161,8 @@ fi
 if [[ -z "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]]; then
 	echo -e "${YELLOW}[WARN] OP_SERVICE_ACCOUNT_TOKEN environment variable is not set.${NC}"
 	echo -e "Please enter your 1Password service account token:"
-	read -rs OP_SERVICE_ACCOUNT_TOKEN
+	OP_SERVICE_ACCOUNT_TOKEN=""  # initialise so set -u doesn't fire if read is interrupted
+	read -rs OP_SERVICE_ACCOUNT_TOKEN || true
 	export OP_SERVICE_ACCOUNT_TOKEN
 fi
 
@@ -176,8 +180,8 @@ GIT_EMAIL=$(op item get --vault "homelab" "homelab-git-user" --field email 2>/de
 
 if [[ -n "$GIT_USER" && -n "$GIT_EMAIL" ]]; then
 	echo -e "${GREEN}[INFO] Configuring git user/email...${NC}"
-	CURRENT_GIT_USER=$(git config --global user.name 2>/dev/null || true)
-	CURRENT_GIT_EMAIL=$(git config --global user.email 2>/dev/null || true)
+	CURRENT_GIT_USER=$(sudo -u "${SUDO_USER:-$USER}" git config --global user.name 2>/dev/null || true)
+	CURRENT_GIT_EMAIL=$(sudo -u "${SUDO_USER:-$USER}" git config --global user.email 2>/dev/null || true)
 	if [[ "$CURRENT_GIT_USER" != "$GIT_USER" ]]; then
 		sudo -u "${SUDO_USER:-$USER}" git config --global user.name "$GIT_USER"
 		echo -e "${GREEN}[INFO] Set git user.name to $GIT_USER${NC}"
@@ -234,7 +238,7 @@ wait_for_1password_ssh_agent() {
 			return 0
 		fi
 		sleep 1
-		((wait_time++))
+		wait_time=$((wait_time + 1))  # arithmetic assign avoids set -e exit when result is 0
 		if [[ $((wait_time % 5)) -eq 0 ]]; then
 			echo -e "${YELLOW}[INFO] Still waiting for 1Password SSH agent... ($wait_time/${max_wait}s)${NC}"
 		fi
@@ -252,7 +256,7 @@ if has_desktop_env; then
 			echo -e "${GREEN}[INFO] Installing 1Password Desktop app...${NC}"
 			if [[ "$OS_FAMILY" == "debian" ]]; then
 				if ! grep -q "downloads.1password.com/linux/debian" /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
-					curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
+					curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --yes -o /usr/share/keyrings/1password-archive-keyring.gpg
 					# FIX (Debian 13): Use 'stable' instead of lsb_release codename ('trixie' not yet in 1Password repo)
 					echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" | sudo tee /etc/apt/sources.list.d/1password-app.list
 					sudo apt-get update -y
@@ -278,7 +282,7 @@ EOF
 			echo -e "${YELLOW}  3. Go to Settings > Developer${NC}"
 			echo -e "${YELLOW}  4. Enable 'Use the SSH agent'${NC}"
 			echo -e "${YELLOW}  5. Enable '1Password CLI'${NC}"
-			read -p "Press Enter when you've completed these steps..."
+			read -p "Press Enter when you've completed these steps..." || true
 		else
 			echo -e "${YELLOW}[INFO] 1Password Desktop app already installed.${NC}"
 		fi
@@ -335,13 +339,18 @@ if [[ "$USE_1PASSWORD_AGENT" == "false" ]]; then
 		echo -e "${GREEN}[INFO] SSH public key saved to $SSH_PUB_KEY_PATH.${NC}"
 	fi
 	
-	# Start ssh-agent and add key
-	eval "$(ssh-agent -s)"
-	ssh-add "$SSH_KEY_PATH" 2>/dev/null || true
+	# BUG FIX: chown .ssh before ssh-add — key was written as root:root (chmod 600),
+	# so SUDO_USER could not read it. Fix ownership first, then add to agent.
+	chown -R "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$USER_HOME/.ssh"
+	# Start ssh-agent as the target user (not root) so the socket is accessible to them
+	SSH_AGENT_OUTPUT=$(sudo -u "${SUDO_USER:-$USER}" ssh-agent -s)
+	eval "$SSH_AGENT_OUTPUT"
+	export SSH_AUTH_SOCK SSH_AGENT_PID
+	sudo -u "${SUDO_USER:-$USER}" SSH_AUTH_SOCK="$SSH_AUTH_SOCK" ssh-add "$SSH_KEY_PATH" 2>/dev/null || true
 	echo -e "${GREEN}[INFO] SSH key added to ssh-agent.${NC}"
 fi
 
-# Ensure correct ownership
+# Ensure correct ownership of any remaining .ssh files (public key, config, known_hosts)
 chown -R "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$USER_HOME/.ssh"
 
 # Section 7: Test GitHub SSH connection
@@ -369,7 +378,10 @@ if [[ "$USE_1PASSWORD_AGENT" == "true" ]]; then
 	AGENT_TOML_PATH="$USER_HOME/.config/1Password/ssh/agent.toml"
 	echo -e "${GREEN}[INFO] Updating $AGENT_TOML_PATH with SSH key reference...${NC}"
 	
-	mkdir -p "$(dirname "$AGENT_TOML_PATH")"
+	# BUG FIX: run mkdir as SUDO_USER so ~/.config is created with correct ownership.
+	# If root runs mkdir -p, ~/.config is created as root:root even after chown on the
+	# 1Password subtree, breaking the user's ability to create other ~/.config entries.
+	sudo -u "${SUDO_USER:-$USER}" mkdir -p "$(dirname "$AGENT_TOML_PATH")"
 	
 	if ! grep -q "item = \"$SSH_ITEM_NAME\"" "$AGENT_TOML_PATH" 2>/dev/null; then
 		cat <<EOF >> "$AGENT_TOML_PATH"
@@ -382,8 +394,9 @@ EOF
 	else
 		echo -e "${GREEN}[INFO] agent.toml already contains reference to $SSH_ITEM_NAME.${NC}"
 	fi
-	
-	chown "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$AGENT_TOML_PATH"
+	# NEW BUG FIX: chown must run AFTER agent.toml is written, not before.
+	# Previously chown ran before cat >>, leaving a newly created agent.toml as root:root.
+	chown -R "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$USER_HOME/.config/1Password"
 fi
 
 # Section 9: Create ~/.ansible.sh with secrets from 1Password
@@ -392,13 +405,17 @@ echo -e "${GREEN}[INFO] Creating $ANSIBLE_SH_PATH with secrets from 1Password...
 
 VAULT_PASSWORD=$(op item get --vault "$VAULT_NAME" "ansible-vault-password" --field password --reveal 2>/dev/null || true)
 
+if [[ -z "$VAULT_PASSWORD" ]]; then
+	echo -e "${RED}[ERROR] Could not fetch ansible vault password from 1Password. Check vault item 'ansible-vault-password'.${NC}" >&2
+	exit 1
+fi
+
 VAULT_PASS_PATH="$USER_HOME/.ansible/.vault_pass.txt"
 mkdir -p "$(dirname "$VAULT_PASS_PATH")"
 
 # BUG FIX: echo appends a trailing newline; ansible-vault password files must NOT have one.
 printf '%s' "$VAULT_PASSWORD" > "$VAULT_PASS_PATH"
 chmod 600 "$VAULT_PASS_PATH"
-chown -R "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$USER_HOME/.ansible"
 echo -e "${GREEN}[INFO] Vault password saved to $VAULT_PASS_PATH and permissioned to 600.${NC}"
 
 echo -e "${GREEN}[INFO] Installing ansible galaxy roles...${NC}"
@@ -429,16 +446,23 @@ fi
 ansible-pull -U git@github.com:markdarwin/ansible.git -K --vault-password-file ~/.ansible/.vault_pass.txt
 EOF
 
-chown "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$ANSIBLE_SH_PATH"
 chmod 700 "$ANSIBLE_SH_PATH"
-echo -e "${GREEN}[INFO] $ANSIBLE_SH_PATH created and made executable.${NC}"
+
+# BUG FIX: chown is now the LAST operation in this section, after ansible-galaxy has run
+# and ansible.sh has been written. Previously chown ran before ansible-galaxy, leaving
+# the roles/ directory and its contents owned by root:root.
+chown -R "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$USER_HOME/.ansible"
+chown "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$ANSIBLE_SH_PATH"
+echo -e "${GREEN}[INFO] $ANSIBLE_SH_PATH created, owned by ${SUDO_USER:-$USER}, and made executable.${NC}"
 
 
 # Section 10: Install CrowdStrike Falcon Sensor (optional)
 FALCON_SENSOR_DEB="falcon-sensor.deb"
 FALCON_SENSOR_RPM="falcon-sensor.rpm"
-FALCON_SENSOR_PATH_DEB="$(dirname "$(readlink -f "$0")")/$FALCON_SENSOR_DEB"
-FALCON_SENSOR_PATH_RPM="$(dirname "$(readlink -f "$0")")/$FALCON_SENSOR_RPM"
+# Use BASH_SOURCE[0] — reliable regardless of invocation method ($0 breaks when piped to bash)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FALCON_SENSOR_PATH_DEB="$SCRIPT_DIR/$FALCON_SENSOR_DEB"
+FALCON_SENSOR_PATH_RPM="$SCRIPT_DIR/$FALCON_SENSOR_RPM"
 
 if [[ "$OS_FAMILY" == "debian" && -f "$FALCON_SENSOR_PATH_DEB" ]]; then
 	echo -e "${GREEN}[INFO] Installing CrowdStrike Falcon Sensor from $FALCON_SENSOR_PATH_DEB...${NC}"
