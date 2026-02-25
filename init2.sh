@@ -2,12 +2,24 @@
 # Initialize the environment
 
 # Section 0: Check for sudo privileges
-if ! sudo -n true 2>/dev/null; then
-	echo -e "[ERROR] This script requires sudo privileges. Run the following commands:
-  1. su -
-  2. usermod -aG sudo $USER
-  3. reboot
-Then re-run this script." >&2
+# sudo -n (non-interactive) is NOT used — it fails for any user who must enter a password,
+# which is the normal default on both Fedora (wheel) and Debian (sudo group).
+# Check group membership first: wheel on Fedora, sudo on Debian.
+_current_groups=$(id -Gn 2>/dev/null)
+if ! echo "$_current_groups" | grep -qwE "wheel|sudo"; then
+	echo -e "[ERROR] This account is not in the sudo or wheel group.
+To fix this, run the following commands as root:
+  Fedora:  usermod -aG wheel $USER
+  Debian:  usermod -aG sudo $USER
+Then log out and back in (or reboot), and re-run this script.
+Current groups: $_current_groups" >&2
+	exit 1
+fi
+
+# Confirm sudo actually works — this may prompt for your password, which is expected.
+if ! sudo true; then
+	echo -e "[ERROR] sudo test failed even though you are in the wheel/sudo group.
+Check /etc/sudoers or run: sudo visudo" >&2
 	exit 1
 fi
 
