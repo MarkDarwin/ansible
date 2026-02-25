@@ -59,7 +59,7 @@ if [[ "$OS_FAMILY" == "debian" ]]; then
 	echo -e "${GREEN}[INFO] Ensuring project dependencies are installed...${NC}"
 	install_debian_packages "${PROJECT_PACKAGES[@]}"
 elif [[ "$OS_FAMILY" == "fedora" ]]; then
-	REQUIRED_PACKAGES=(curl sudo gnupg2 redhat-lsb-core)
+	REQUIRED_PACKAGES=(curl sudo gnupg2)
 	PROJECT_PACKAGES=(git python3 python3-pip ansible)
 	install_fedora_packages() {
 		local packages=("${@}")
