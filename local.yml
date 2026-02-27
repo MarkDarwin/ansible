@@ -42,4 +42,4 @@
     - include_tasks: tasks/terraform.yml
     - include_tasks: tasks/obsidian.yml
     - include_tasks: tasks/github-packages.yml
-    - include_tasks: tasks/onedrive.yml
+    #- include_tasks: tasks/onedrive.yml
